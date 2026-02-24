@@ -1,0 +1,61 @@
+<?xml version="1.0"?>
+<?xml-model
+  href="http://download.ros.org/schema/package_format3.xsd"
+  schematypens="http://www.w3.org/2001/XMLSchema"?>
+<package format="3">
+
+  <!-- ================================================== -->
+  <!-- Package metadata -->
+  <!-- ================================================== -->
+  <name>matrobot_hardware</name>
+  <version>0.1.0</version>
+
+  <description>
+    Hardware abstraction and localization package for the Matrobot mobile robot.
+    This package provides low-level hardware interfaces and sensor fusion
+    components, including wheel odometry, IMU, and EKF-based
+    localization using robot_localization.
+  </description>
+
+  <!-- Maintainers -->
+  <maintainer email="beyazlimelike@gmail.com">Melike Beyazlı</maintainer>
+
+  <!-- Authors / Contributors -->
+  <author email="beyazlimelike@gmail.com">Melike Beyazlı</author>
+
+  <license>MIT</license>
+
+  <!-- ================================================== -->
+  <!-- Build system -->
+  <!-- ================================================== -->
+  <buildtool_depend>ament_cmake</buildtool_depend>
+  <buildtool_depend>ament_cmake_python</buildtool_depend>
+
+  <!-- ================================================== -->
+  <!-- Runtime dependencies -->
+  <!-- ================================================== -->
+  <depend>rclpy</depend>
+
+  <!-- Message / interface dependencies -->
+  <depend>std_msgs</depend>
+  <depend>sensor_msgs</depend>
+  <depend>geometry_msgs</depend>
+  <depend>nav_msgs</depend>
+  <depend>tf2_ros</depend>
+
+  <!-- ================================================== -->
+  <!-- Localization and sensor drivers (runtime only) -->
+  <!-- ================================================== -->
+  <exec_depend>robot_localization</exec_depend>
+  <exec_depend>witmotion_hwt905_driver</exec_depend>
+  <exec_depend>sllidar_ros2</exec_depend>
+
+  <!-- ================================================== -->
+  <!-- Export -->
+  <!-- ================================================== -->
+  <export>
+    <build_type>ament_cmake</build_type>
+  </export>
+
+</package>
+

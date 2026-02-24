@@ -1,0 +1,52 @@
+<?xml version="1.0"?>
+<?xml-model
+  href="http://download.ros.org/schema/package_format3.xsd"
+  schematypens="http://www.w3.org/2001/XMLSchema"?>
+<package format="3">
+
+  <!-- ================================================== -->
+  <!-- Package metadata -->
+  <!-- ================================================== -->
+  <name>matrobot_description</name>
+  <version>0.1.0</version>
+
+  <description>
+    Robot description package for the matrobot mobile robot.
+    This package contains the URDF/Xacro model, TF generation
+    via robot_state_publisher, and RViz visualization
+    configurations. It is designed to be reusable across
+    simulation and real hardware deployments.
+  </description>
+
+  <maintainer email="beyazlimelike@gmail.com">Melike Beyazlı</maintainer>
+  <author email="beyazlimelike@gmail.com">Melike Beyazlı</author>
+  <license>MIT</license>
+
+  <!-- ================================================== -->
+  <!-- Build system -->
+  <!-- ================================================== -->
+  <buildtool_depend>ament_cmake</buildtool_depend>
+  <buildtool_depend>ament_cmake_python</buildtool_depend>
+
+  <!-- ================================================== -->
+  <!-- Runtime dependencies -->
+  <!-- ================================================== -->
+
+  <!-- URDF / Xacro processing -->
+  <depend>xacro</depend>
+
+  <!-- TF publishing from URDF -->
+  <depend>robot_state_publisher</depend>
+
+  <!-- Visualization -->
+  <exec_depend>rviz2</exec_depend>
+
+  <!-- ================================================== -->
+  <!-- Export -->
+  <!-- ================================================== -->
+  <export>
+    <build_type>ament_cmake</build_type>
+  </export>
+
+</package>
+

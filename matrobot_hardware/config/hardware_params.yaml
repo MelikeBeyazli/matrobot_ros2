@@ -1,0 +1,37 @@
+hardware_node:
+  ros__parameters:
+    port: "/dev/ttyUSB0"
+    baudrate: 115200
+
+    use_imu: false #Arduino ile imu bağlanılırsa true
+
+    left_joint_name: "left_wheel_joint"
+    right_joint_name: "right_wheel_joint"
+
+    wheel_radius: 0.075
+    wheel_base: 0.41
+
+    odom_topic: "/odometry/wheel"
+    imu_topic: "/imu/data_raw"
+    cmd_vel_topic: "/cmd_vel"
+    joint_states_topic: "/joint_states"
+
+    odom_frame_id: "odom"
+    base_frame_id: "base_link"
+    imu_frame_id: "imu_link"
+
+    publish_tf: false   # EKF varsa false önerilir
+
+    cmd_rate_hz: 50.0
+    cmd_timeout_s: 0.4
+
+    clamp_cmd: true
+    max_v: 1.2
+    max_w: 3.0
+
+    odom_cov_x: 0.05
+    odom_cov_y: 0.05
+    odom_cov_yaw: 0.10
+
+    serial_read_hz: 200.0
+    serial_timeout_s: 0.01

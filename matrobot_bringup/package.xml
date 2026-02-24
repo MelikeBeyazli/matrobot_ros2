@@ -1,0 +1,60 @@
+<?xml version="1.0"?>
+<?xml-model
+  href="http://download.ros.org/schema/package_format3.xsd"
+  schematypens="http://www.w3.org/2001/XMLSchema"?>
+<package format="3">
+
+  <!-- ================================================== -->
+  <!-- Package metadata -->
+  <!-- ================================================== -->
+  <name>matrobot_bringup</name>
+  <version>0.1.0</version>
+
+  <description>
+    System bringup package for the Matrobot Mobile Robot.
+    This package provides top-level launch files that
+    orchestrate robot description, hardware drivers,
+    localization, and auxiliary tools such as teleoperation
+    and data logging.
+  </description>
+
+  <maintainer email="beyazlimelike@gmail.com">Melike Beyazlı</maintainer>
+  <author email="beyazlimelike@gmail.com">Melike Beyazlı</author>
+
+  <license>MIT</license>
+
+  <!-- ================================================== -->
+  <!-- Build system -->
+  <!-- ================================================== -->
+  <buildtool_depend>ament_cmake</buildtool_depend>
+
+  <!-- ================================================== -->
+  <!-- Runtime dependencies (launch orchestration) -->
+  <!-- ================================================== -->
+  <exec_depend>launch</exec_depend>
+  <exec_depend>launch_ros</exec_depend>
+  <exec_depend>ament_index_python</exec_depend>
+
+  <!-- ================================================== -->
+  <!-- Subsystem packages -->
+  <!-- ================================================== -->
+  <exec_depend>matrobot_description</exec_depend>
+  <!--exec_depend>matrobot_hardware</exec_depend-->
+  <exec_depend>matrobot_simulation</exec_depend>
+
+  <!-- ================================================== -->
+  <!-- Auxiliary runtime tools -->
+  <!-- ================================================== -->
+  <exec_depend>geometry_msgs</exec_depend>
+  <exec_depend>nav_msgs</exec_depend>
+  <exec_depend>sensor_msgs</exec_depend>
+
+  <!-- ================================================== -->
+  <!-- Export -->
+  <!-- ================================================== -->
+  <export>
+    <build_type>ament_cmake</build_type>
+  </export>
+
+</package>
+

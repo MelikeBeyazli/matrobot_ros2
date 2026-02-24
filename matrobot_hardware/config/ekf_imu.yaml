@@ -1,0 +1,39 @@
+ekf_filter_node_odom:
+  ros__parameters:
+    frequency: 30.0
+    print_diagnostics: true
+    debug: false
+    two_d_mode: true
+    publish_tf: true
+
+    map_frame: map
+    odom_frame: odom
+    base_link_frame: base_footprint
+    world_frame: odom
+
+    # ===============================
+    # IMU (HWT905)
+    # ===============================
+    imu0: /imu/data
+    imu0_config: [false, false, false,   # position kapalı
+                  true, true,  true,    # orientation açık
+                  false, false, false,   # linear velocity kapalı
+                  true, true,  true,    # angular velocity açık
+                  true,  true,  true]    # linear acceleration açık
+    imu0_differential: false
+    imu0_relative: false
+    imu0_queue_size: 10
+    imu0_remove_gravitational_acceleration: true
+
+    # ==============================
+    # KONTROL GİRİŞİ (cmd_vel kullanmıyoruz)
+    # ==============================
+    use_control: false
+
+
+    # ==============================
+    #  PROCESS NOISE COVARIANCE
+    #  Sistem iç gürültüsü
+    # ==============================
+
+    process_noise_covariance: [0.05, 0.05, 0.001, 0.02, 0.02, 0.10, 0.10, 0.10, 0.05, 0.20,  0.20, 0.10, 10.0, 10.0, 10.0]
