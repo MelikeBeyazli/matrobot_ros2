@@ -26,15 +26,13 @@ def generate_launch_description():
     lidar_port   = LaunchConfiguration('lidar_port')  
     baudrate = LaunchConfiguration('baudrate')
     publish_tf = LaunchConfiguration('publish_tf')
-    use_imu = LaunchConfiguration('use_imu')
 
     declare_args = [
         DeclareLaunchArgument('use_sim_time', default_value='false'),
-        DeclareLaunchArgument('serial_port', default_value='/dev/ttyUSB0'),
+        DeclareLaunchArgument('serial_port', default_value='/dev/ttyArduino'),
         DeclareLaunchArgument('lidar_port', default_value='/dev/ttyLIDAR'),
         DeclareLaunchArgument('publish_tf', default_value='false'),
         DeclareLaunchArgument('baudrate', default_value='115200'),
-        DeclareLaunchArgument('use_imu', default_value='false'),
 
     ]
 
@@ -42,9 +40,9 @@ def generate_launch_description():
     # Hardware Interface Node
     # ==================================================
     hardware_node = Node(
-        package='kangal_hardware',
+        package='matrobot_hardware',
         executable='HardwareNode',
-        name='kangal_hardware_interface',
+        name='matrobot_hardware_interface',
         output='screen',
         emulate_tty=True,
         parameters=[
@@ -53,7 +51,6 @@ def generate_launch_description():
                 'port': serial_port,
                 'baudrate': baudrate,
                 'publish_tf': publish_tf,
-                'use_imu': use_imu,
             }
         ]
     )
@@ -86,6 +83,7 @@ def generate_launch_description():
             'frame_id': 'lidar2d_link',
             'angle_compensate': True,
             'scan_mode': 'DenseBoost'
+            'inverted':True,
         }]
     )
 
