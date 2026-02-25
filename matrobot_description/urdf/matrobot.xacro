@@ -1,5 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <robot name="matrobot" xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+  <xacro:property name="mesh_root" value="$(find matrobot_description)/meshes"/>
+  <!--mesh filename="file://${mesh_root}/base_link.STL" /--> <!--urdf oluşturduktan sonra visual kısma ekle-->
+
   <static>false</static>
 
   <!-- Properties -->
@@ -17,7 +21,7 @@
   <xacro:property name="caster_wheel_radius" value="${(wheel_radius - (base_height / 2)) / 2}" />
   <xacro:property name="caster_wheel_weight" value="0.5" />
   
-  <xacro:property name="wheel_separation" value="${base_width + wheel_length + 0.04}" />
+  <xacro:property name="wheel_separation" value="${base_width + wheel_length + 0.08}" />  <!--Gövde genişliği + (Teker genişliği/2)*2 + mil uzunluğu-->
   <xacro:property name="wheel_diameter" value="${wheel_radius}" />
 
   <xacro:property name="lidar_radius" value="0.0275"/>
@@ -314,5 +318,6 @@
       <topic>/joint_states</topic>
     </plugin>
   </gazebo>
+
 
 </robot>
