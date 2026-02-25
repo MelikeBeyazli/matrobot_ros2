@@ -48,7 +48,7 @@ def generate_launch_description():
         parameters=[
             hardware_config,
             {
-                'port': serial_port,
+                'serial_port': serial_port,
                 'baudrate': baudrate,
                 'publish_tf': publish_tf,
             }
