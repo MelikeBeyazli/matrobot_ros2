@@ -215,13 +215,56 @@ Her robot için farklı Domain ID kullanılabilir.
 
 ---
 
-## 📌 RMW Implementasyonu (Önerilen Ek)
+## 📌 ROS Middleware (RMW) – *(İleri Seviye Dipnot)*
+
+> ⚠️ Bu bölüm ileri seviye kullanıcılar içindir. Eğitim sırasında zorunlu değildir.
+
+ROS2, doğrudan bir haberleşme sistemi kullanmaz.
+Alt katmanda **DDS (Data Distribution Service)** çalışır.
+
+Bu katman ile ROS2 arasında bulunan soyutlama yapısına:
+
+```
+RMW (ROS Middleware Interface)
+```
+
+denir.
+
+### 📌 RMW Ne İşe Yarar?
+
+RMW, ROS2'nin hangi DDS altyapısını kullanacağını belirler.
+
+Örneğin:
+
+| RMW                | Açıklama              |
+| ------------------ | --------------------- |
+| rmw_fastrtps_cpp   | Varsayılan (Fast DDS) |
+| rmw_cyclonedds_cpp | Cyclone DDS           |
+| rmw_connextdds     | RTI Connext           |
+
+---
+
+### 📌 Neden Değiştirilir?
+
+* Ağ keşif (discovery) sorunları varsa
+* Çok robotlu sistemlerde performans problemi varsa
+* Endüstriyel projelerde özel DDS gereksinimi varsa
+
+---
+
+### 📌 Nasıl Ayarlanır?
+
+`.bashrc` içine şu şekilde eklenebilir:
 
 ```bash
 export RMW_IMPLEMENTATION=rmw_fastrtps_cpp
 ```
 
-DDS middleware seçimi yapılabilir.
+Alternatif:
+
+```bash
+export RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
+```
 
 ---
 
