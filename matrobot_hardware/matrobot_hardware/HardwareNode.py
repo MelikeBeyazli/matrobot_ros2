@@ -1,16 +1,18 @@
+#!/usr/bin/env python3
 import math
-from typing import Optional
+import threading
+import time
+from typing import Optional, Tuple
 
 import rclpy
 from rclpy.node import Node
 
-from geometry_msgs.msg import Twist, TransformStamped
+from geometry_msgs.msg import Twist, TransformStamped, Quaternion
 from nav_msgs.msg import Odometry
-from sensor_msgs.msg import JointState, Imu
+from sensor_msgs.msg import JointState
 from std_msgs.msg import Header
 
 from tf2_ros import TransformBroadcaster
-from geometry_msgs.msg import Quaternion
 
 import serial
 
@@ -38,80 +40,84 @@ class HardwareNode(Node):
         self.declare_parameter('left_joint_name', 'left_wheel_joint')
         self.declare_parameter('right_joint_name', 'right_wheel_joint')
 
-        self.declare_parameter('wheel_radius', 0.075)  # meters
-        self.declare_parameter('wheel_base', 0.41)     # meters
+        self.declare_parameter('wheel_radius', 0.09)   # meters
+        self.declare_parameter('wheel_base', 0.435)    # meters
 
-        self.declare_parameter('odom_topic', '/odometry_wheel')
-        self.declare_parameter('imu_topic', '/imu/data_raw')
+        self.declare_parameter('odom_topic', '/odometry/wheel')
         self.declare_parameter('cmd_vel_topic', '/cmd_vel')
         self.declare_parameter('joint_states_topic', '/joint_states')
 
         self.declare_parameter('odom_frame_id', 'odom')
-        self.declare_parameter('base_frame_id', 'base_link')
-        self.declare_parameter('imu_frame_id', 'imu_link')
+        self.declare_parameter('base_frame_id', 'base_footprint')
 
-        # TF yayınlama (EKF varsa genelde false)
         self.declare_parameter('publish_tf', False)
-
-        # Arduino IMU kullan / kullanma
-        self.declare_parameter('use_imu', False)
-
-        # cmd gönderme
-        self.declare_parameter('cmd_rate_hz', 50.0)
-        self.declare_parameter('cmd_timeout_s', 0.4)
 
         # cmd clamp
         self.declare_parameter('clamp_cmd', True)
         self.declare_parameter('max_v', 1.2)
         self.declare_parameter('max_w', 3.0)
 
+        # Open-loop v,w -> PWM mapping (TUNE)
+        self.declare_parameter('v_to_pwm', 220.0)  # 1.0 m/s -> 220 PWM
+        self.declare_parameter('w_to_pwm', 120.0)  # 1.0 rad/s -> 120 PWM
+        self.declare_parameter('pwm_max', 255)
+
+        # cmd timeout
+        self.declare_parameter('cmd_timeout_s', 0.4)
+
         # Odometry covariance (basit)
         self.declare_parameter('odom_cov_x', 0.05)
         self.declare_parameter('odom_cov_y', 0.05)
         self.declare_parameter('odom_cov_yaw', 0.10)
 
-        # Serial read settings
-        self.declare_parameter('serial_read_hz', 200.0)   # line parsing loop
-        self.declare_parameter('serial_timeout_s', 0.01)  # pyserial timeout
+        # Serial settings
+        self.declare_parameter('serial_timeout_s', 0.002)     # RX read timeout (small)
+        self.declare_parameter('serial_write_timeout_s', 0.0) # non-blocking write
+
+        # Thread rates (as fast as you want; limited by baudrate/OS)
+        self.declare_parameter('tx_rate_hz', 200.0)  # PWM send rate (e.g. 200-500)
+        self.declare_parameter('rx_chunk_bytes', 512)
 
         # -------------------------
         # Pull params
         # -------------------------
-        self.port = self.get_parameter('serial_port').value   # FIX: port -> serial_port
+        self.port = str(self.get_parameter('serial_port').value)
         self.baudrate = int(self.get_parameter('baudrate').value)
 
-        self.left_joint_name = self.get_parameter('left_joint_name').value
-        self.right_joint_name = self.get_parameter('right_joint_name').value
+        self.left_joint_name = str(self.get_parameter('left_joint_name').value)
+        self.right_joint_name = str(self.get_parameter('right_joint_name').value)
 
         self.wheel_radius = float(self.get_parameter('wheel_radius').value)
         self.wheel_base = float(self.get_parameter('wheel_base').value)
 
-        self.odom_topic = self.get_parameter('odom_topic').value
-        self.imu_topic = self.get_parameter('imu_topic').value
-        self.cmd_vel_topic = self.get_parameter('cmd_vel_topic').value
-        self.joint_states_topic = self.get_parameter('joint_states_topic').value
+        self.odom_topic = str(self.get_parameter('odom_topic').value)
+        self.cmd_vel_topic = str(self.get_parameter('cmd_vel_topic').value)
+        self.joint_states_topic = str(self.get_parameter('joint_states_topic').value)
 
-        self.odom_frame_id = self.get_parameter('odom_frame_id').value
-        self.base_frame_id = self.get_parameter('base_frame_id').value
-        self.imu_frame_id = self.get_parameter('imu_frame_id').value
+        self.odom_frame_id = str(self.get_parameter('odom_frame_id').value)
+        self.base_frame_id = str(self.get_parameter('base_frame_id').value)
 
         self.publish_tf = bool(self.get_parameter('publish_tf').value)
-
-        self.use_arduino_imu = bool(self.get_parameter('use_imu').value)
-
-        self.cmd_rate_hz = float(self.get_parameter('cmd_rate_hz').value)
-        self.cmd_timeout_s = float(self.get_parameter('cmd_timeout_s').value)
 
         self.clamp_cmd = bool(self.get_parameter('clamp_cmd').value)
         self.max_v = float(self.get_parameter('max_v').value)
         self.max_w = float(self.get_parameter('max_w').value)
 
+        self.v_to_pwm = float(self.get_parameter('v_to_pwm').value)
+        self.w_to_pwm = float(self.get_parameter('w_to_pwm').value)
+        self.pwm_max = int(self.get_parameter('pwm_max').value)
+
+        self.cmd_timeout_s = float(self.get_parameter('cmd_timeout_s').value)
+
         self.odom_cov_x = float(self.get_parameter('odom_cov_x').value)
         self.odom_cov_y = float(self.get_parameter('odom_cov_y').value)
         self.odom_cov_yaw = float(self.get_parameter('odom_cov_yaw').value)
 
-        self.serial_read_hz = float(self.get_parameter('serial_read_hz').value)
         self.serial_timeout_s = float(self.get_parameter('serial_timeout_s').value)
+        self.serial_write_timeout_s = float(self.get_parameter('serial_write_timeout_s').value)
+
+        self.tx_rate_hz = float(self.get_parameter('tx_rate_hz').value)
+        self.rx_chunk_bytes = int(self.get_parameter('rx_chunk_bytes').value)
 
         # -------------------------
         # Publishers/Subscribers
@@ -119,24 +125,16 @@ class HardwareNode(Node):
         self.pub_js = self.create_publisher(JointState, self.joint_states_topic, 10)
         self.pub_odom = self.create_publisher(Odometry, self.odom_topic, 10)
 
-        # IMU publisher sadece gerekiyorsa
-        self.pub_imu = None
-        if self.use_arduino_imu:
-            self.pub_imu = self.create_publisher(Imu, self.imu_topic, 50)
-            self.get_logger().info("Arduino IMU ENABLED: publishing IMU from serial.")
-        else:
-            self.get_logger().info("Arduino IMU DISABLED: ignoring IMU lines from serial.")
-
         self.sub_cmd = self.create_subscription(Twist, self.cmd_vel_topic, self._on_cmd_vel, 10)
-
         self.tf_broadcaster = TransformBroadcaster(self)
 
         # -------------------------
         # State
         # -------------------------
+        self._cmd_lock = threading.Lock()
         self.v_cmd = 0.0
         self.w_cmd = 0.0
-        self.last_cmd_time = self.get_clock().now()
+        self.last_cmd_mono = time.monotonic()
 
         self.x = 0.0
         self.y = 0.0
@@ -149,31 +147,43 @@ class HardwareNode(Node):
 
         self.rx_buffer = ""
 
-        # -------------------------
-        # Serial open
-        # -------------------------
+        # Serial
         self.ser: Optional[serial.Serial] = None
-        self._open_serial()
+        self._open_serial_or_die()
 
-        # Timers
-        self.cmd_timer = self.create_timer(1.0 / max(self.cmd_rate_hz, 1.0), self._cmd_timer_cb)
-        self.read_timer = self.create_timer(1.0 / max(self.serial_read_hz, 10.0), self._read_timer_cb)
+        # Threads
+        self._stop_evt = threading.Event()
+        self._tx_thread = threading.Thread(target=self._tx_loop, name="serial_tx", daemon=True)
+        self._rx_thread = threading.Thread(target=self._rx_loop, name="serial_rx", daemon=True)
+        self._tx_thread.start()
+        self._rx_thread.start()
 
-        self.get_logger().info(
-            f"[HardwareNode] Ready port={self.port} baud={self.baudrate} publish_tf={self.publish_tf} use_arduino_imu={self.use_arduino_imu}"
-        )
-
-    def _open_serial(self):
+    # -------------------------
+    # Serial open
+    # -------------------------
+    def _open_serial_or_die(self):
         try:
             self.ser = serial.Serial(
                 port=self.port,
                 baudrate=self.baudrate,
-                timeout=self.serial_timeout_s
+                timeout=self.serial_timeout_s,
+                write_timeout=self.serial_write_timeout_s,
             )
+            # Bazı kartlarda reset için iyi olur:
+            try:
+                self.ser.reset_input_buffer()
+                self.ser.reset_output_buffer()
+            except Exception:
+                pass
+
+            self.get_logger().info(f"Serial opened: {self.port} @ {self.baudrate}")
         except Exception as e:
             self.get_logger().error(f"Failed to open serial {self.port}: {e}")
             raise
 
+    # -------------------------
+    # cmd_vel callback
+    # -------------------------
     def _on_cmd_vel(self, msg: Twist):
         v = float(msg.linear.x)
         w = float(msg.angular.z)
@@ -182,45 +192,91 @@ class HardwareNode(Node):
             v = max(-self.max_v, min(self.max_v, v))
             w = max(-self.max_w, min(self.max_w, w))
 
-        self.v_cmd = v
-        self.w_cmd = w
-        self.last_cmd_time = self.get_clock().now()
+        with self._cmd_lock:
+            self.v_cmd = v
+            self.w_cmd = w
+            self.last_cmd_mono = time.monotonic()
 
-    def _cmd_timer_cb(self):
-        now = self.get_clock().now()
-        dt = (now - self.last_cmd_time).nanoseconds * 1e-9
+    def _vw_to_pwm(self, v: float, w: float) -> Tuple[int, int]:
+        base = v * self.v_to_pwm
+        turn = w * self.w_to_pwm
 
-        v = self.v_cmd
-        w = self.w_cmd
-        if dt > self.cmd_timeout_s:
-            v = 0.0
-            w = 0.0
+        pwm_l = int(round(base - turn))
+        pwm_r = int(round(base + turn))
 
-        line = f"CMD {v:.4f} {w:.4f}\n"
-        try:
-            if self.ser and self.ser.is_open:
-                self.ser.write(line.encode('utf-8'))
-        except Exception as e:
-            self.get_logger().warn(f"Serial write error: {e}")
+        pwm_l = max(-self.pwm_max, min(self.pwm_max, pwm_l))
+        pwm_r = max(-self.pwm_max, min(self.pwm_max, pwm_r))
+        return pwm_l, pwm_r
 
-    def _read_timer_cb(self):
-        if not self.ser or not self.ser.is_open:
-            return
+    # -------------------------
+    # TX loop: sürekli PWM gönder
+    # -------------------------
+    def _tx_loop(self):
+        period = 1.0 / max(self.tx_rate_hz, 1.0)
+        next_t = time.monotonic()
 
-        try:
-            data = self.ser.read(512)
-            if not data:
-                return
-            self.rx_buffer += data.decode('utf-8', errors='ignore')
+        while not self._stop_evt.is_set():
+            now = time.monotonic()
 
-            while '\n' in self.rx_buffer:
-                line, self.rx_buffer = self.rx_buffer.split('\n', 1)
-                line = line.strip('\r').strip()
-                if line:
-                    self._handle_line(line)
+            # drift azaltmak için next_t kovalayalım
+            if now < next_t:
+                time.sleep(next_t - now)
+                continue
 
-        except Exception as e:
-            self.get_logger().warn(f"Serial read error: {e}")
+            # bir sonraki tick
+            next_t += period
+            # eğer çok geride kaldıysak, resetle (CPU sıkışınca)
+            if next_t < now - 5.0 * period:
+                next_t = now + period
+
+            if not self.ser or not self.ser.is_open:
+                continue
+
+            with self._cmd_lock:
+                v = self.v_cmd
+                w = self.w_cmd
+                age = now - self.last_cmd_mono
+
+            if age > self.cmd_timeout_s:
+                v = 0.0
+                w = 0.0
+
+            pwm_l, pwm_r = self._vw_to_pwm(v, w)
+            line = f"PWM {pwm_l} {pwm_r}\n"
+
+            try:
+                self.ser.write(line.encode("utf-8"))
+                # En minimum kesinti için flush istenebilir ama CPU/latency artırabilir.
+                # Gerekirse aç:
+                # self.ser.flush()
+            except Exception as e:
+                self.get_logger().warn(f"Serial TX error: {e}")
+
+    # -------------------------
+    # RX loop: sürekli oku ve parse et
+    # -------------------------
+    def _rx_loop(self):
+        while not self._stop_evt.is_set():
+            if not self.ser or not self.ser.is_open:
+                time.sleep(0.01)
+                continue
+
+            try:
+                data = self.ser.read(self.rx_chunk_bytes)
+                if not data:
+                    continue
+
+                self.rx_buffer += data.decode("utf-8", errors="ignore")
+
+                while "\n" in self.rx_buffer:
+                    line, self.rx_buffer = self.rx_buffer.split("\n", 1)
+                    line = line.strip("\r").strip()
+                    if line:
+                        self._handle_line(line)
+
+            except Exception as e:
+                self.get_logger().warn(f"Serial RX error: {e}")
+                time.sleep(0.01)
 
     def _handle_line(self, line: str):
         parts = line.split()
@@ -229,12 +285,6 @@ class HardwareNode(Node):
 
         if parts[0] == "JS" and len(parts) >= 9:
             self._parse_js(parts)
-
-        elif parts[0] == "IMU" and len(parts) >= 15:
-            # IMU sadece param true ise
-            if self.use_arduino_imu and self.pub_imu is not None:
-                self._parse_imu(parts)
-            # değilse tamamen ignore
 
     def _parse_js(self, p):
         # JS seq t_us Lpos Rpos Lvel Rvel Lticks Rticks
@@ -318,40 +368,24 @@ class HardwareNode(Node):
             t.transform.rotation = odom.pose.pose.orientation
             self.tf_broadcaster.sendTransform(t)
 
-    def _parse_imu(self, p):
-        # IMU seq t_us dt_us gx gy gz ax ay az mx my mz status mag_type
+    def destroy_node(self):
+        # threadleri durdur
+        self._stop_evt.set()
         try:
-            gx = float(p[4]); gy = float(p[5]); gz = float(p[6])
-            ax = float(p[7]); ay = float(p[8]); az = float(p[9])
+            if self._tx_thread.is_alive():
+                self._tx_thread.join(timeout=0.5)
+            if self._rx_thread.is_alive():
+                self._rx_thread.join(timeout=0.5)
         except Exception:
-            return
+            pass
 
-        stamp = self.get_clock().now().to_msg()
+        try:
+            if self.ser and self.ser.is_open:
+                self.ser.close()
+        except Exception:
+            pass
 
-        imu = Imu()
-        imu.header.stamp = stamp
-        imu.header.frame_id = self.imu_frame_id
-
-        imu.orientation_covariance[0] = -1.0  # orientation unknown
-
-        imu.angular_velocity.x = gx
-        imu.angular_velocity.y = gy
-        imu.angular_velocity.z = gz
-
-        imu.linear_acceleration.x = ax
-        imu.linear_acceleration.y = ay
-        imu.linear_acceleration.z = az
-
-        imu.angular_velocity_covariance[0] = 0.02
-        imu.angular_velocity_covariance[4] = 0.02
-        imu.angular_velocity_covariance[8] = 0.02
-
-        imu.linear_acceleration_covariance[0] = 0.2
-        imu.linear_acceleration_covariance[4] = 0.2
-        imu.linear_acceleration_covariance[8] = 0.2
-
-        if self.pub_imu is not None:
-            self.pub_imu.publish(imu)
+        super().destroy_node()
 
 
 def main(args=None):
@@ -362,10 +396,9 @@ def main(args=None):
     except KeyboardInterrupt:
         pass
     finally:
-        try:
-            if node.ser and node.ser.is_open:
-                node.ser.close()
-        except Exception:
-            pass
         node.destroy_node()
         rclpy.shutdown()
+
+
+if __name__ == "__main__":
+    main()
