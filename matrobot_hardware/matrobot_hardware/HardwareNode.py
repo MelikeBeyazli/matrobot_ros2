@@ -54,12 +54,12 @@ class HardwareNode(Node):
 
         # cmd clamp
         self.declare_parameter('clamp_cmd', True)
-        self.declare_parameter('max_v', 1.2)
-        self.declare_parameter('max_w', 3.0)
+        self.declare_parameter('max_v', 0.6)
+        self.declare_parameter('max_w', 2.6)
 
         # Open-loop v,w -> PWM mapping (TUNE)
-        self.declare_parameter('v_to_pwm', 220.0)  # 1.0 m/s -> 220 PWM
-        self.declare_parameter('w_to_pwm', 120.0)  # 1.0 rad/s -> 120 PWM
+        self.declare_parameter('v_to_pwm', 220.0)  
+        self.declare_parameter('w_to_pwm', 120.0)  
         self.declare_parameter('pwm_max', 255)
 
         # cmd timeout
