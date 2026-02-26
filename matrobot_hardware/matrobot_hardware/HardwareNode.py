@@ -58,8 +58,8 @@ class HardwareNode(Node):
         self.declare_parameter('max_w', 2.6)
 
         # Open-loop v,w -> PWM mapping (TUNE)
-        self.declare_parameter('v_to_pwm', 220.0)  
-        self.declare_parameter('w_to_pwm', 120.0)  
+        self.declare_parameter('v_to_pwm', 220.0)
+        self.declare_parameter('w_to_pwm', 120.0)
         self.declare_parameter('pwm_max', 255)
 
         # cmd timeout
@@ -74,8 +74,8 @@ class HardwareNode(Node):
         self.declare_parameter('serial_timeout_s', 0.002)     # RX read timeout (small)
         self.declare_parameter('serial_write_timeout_s', 0.0) # non-blocking write
 
-        # Thread rates (as fast as you want; limited by baudrate/OS)
-        self.declare_parameter('tx_rate_hz', 200.0)  # PWM send rate (e.g. 200-500)
+        # Thread rates
+        self.declare_parameter('tx_rate_hz', 200.0)  # PWM send rate
         self.declare_parameter('rx_chunk_bytes', 512)
 
         # -------------------------
@@ -149,19 +149,31 @@ class HardwareNode(Node):
 
         # Serial
         self.ser: Optional[serial.Serial] = None
-        self._open_serial_or_die()
+
+        # Threads stop event (serial connect loop bunu kullanacak)
+        self._stop_evt = threading.Event()
+
+        # İlk bağlantı: port açılana kadar dene
+        self._ensure_serial_connected()
 
         # Threads
-        self._stop_evt = threading.Event()
         self._tx_thread = threading.Thread(target=self._tx_loop, name="serial_tx", daemon=True)
         self._rx_thread = threading.Thread(target=self._rx_loop, name="serial_rx", daemon=True)
         self._tx_thread.start()
         self._rx_thread.start()
 
     # -------------------------
-    # Serial open
+    # Serial connect helpers
     # -------------------------
-    def _open_serial_or_die(self):
+    def _close_serial(self):
+        try:
+            if self.ser and self.ser.is_open:
+                self.ser.close()
+        except Exception:
+            pass
+        self.ser = None
+
+    def _try_open_serial_once(self) -> bool:
         try:
             self.ser = serial.Serial(
                 port=self.port,
@@ -169,7 +181,6 @@ class HardwareNode(Node):
                 timeout=self.serial_timeout_s,
                 write_timeout=self.serial_write_timeout_s,
             )
-            # Bazı kartlarda reset için iyi olur:
             try:
                 self.ser.reset_input_buffer()
                 self.ser.reset_output_buffer()
@@ -177,9 +188,21 @@ class HardwareNode(Node):
                 pass
 
             self.get_logger().info(f"Serial opened: {self.port} @ {self.baudrate}")
+            return True
         except Exception as e:
-            self.get_logger().error(f"Failed to open serial {self.port}: {e}")
-            raise
+            self._close_serial()
+            self.get_logger().warn(f"Serial not available ({self.port}): {e}")
+            return False
+
+    def _ensure_serial_connected(self):
+        """
+        Port açılana kadar dener. Node kapatılırken döngü biter.
+        """
+        retry_interval_s = 1.0
+        while rclpy.ok() and not self._stop_evt.is_set():
+            if self._try_open_serial_once():
+                return
+            time.sleep(retry_interval_s)
 
     # -------------------------
     # cmd_vel callback
@@ -216,6 +239,13 @@ class HardwareNode(Node):
         next_t = time.monotonic()
 
         while not self._stop_evt.is_set():
+            # Serial yoksa (kablo çıkmışsa vs) tekrar bağlan
+            if not self.ser or not self.ser.is_open:
+                self._ensure_serial_connected()
+                # bağlanamadıysa stop/shutdown olabilir
+                time.sleep(0.01)
+                continue
+
             now = time.monotonic()
 
             # drift azaltmak için next_t kovalayalım
@@ -223,14 +253,9 @@ class HardwareNode(Node):
                 time.sleep(next_t - now)
                 continue
 
-            # bir sonraki tick
             next_t += period
-            # eğer çok geride kaldıysak, resetle (CPU sıkışınca)
             if next_t < now - 5.0 * period:
                 next_t = now + period
-
-            if not self.ser or not self.ser.is_open:
-                continue
 
             with self._cmd_lock:
                 v = self.v_cmd
@@ -246,18 +271,19 @@ class HardwareNode(Node):
 
             try:
                 self.ser.write(line.encode("utf-8"))
-                # En minimum kesinti için flush istenebilir ama CPU/latency artırabilir.
-                # Gerekirse aç:
-                # self.ser.flush()
             except Exception as e:
-                self.get_logger().warn(f"Serial TX error: {e}")
+                self.get_logger().warn(f"Serial TX error: {e} (will reconnect)")
+                self._close_serial()
+                time.sleep(0.05)
 
     # -------------------------
     # RX loop: sürekli oku ve parse et
     # -------------------------
     def _rx_loop(self):
         while not self._stop_evt.is_set():
+            # Serial yoksa tekrar bağlan
             if not self.ser or not self.ser.is_open:
+                self._ensure_serial_connected()
                 time.sleep(0.01)
                 continue
 
@@ -275,8 +301,9 @@ class HardwareNode(Node):
                         self._handle_line(line)
 
             except Exception as e:
-                self.get_logger().warn(f"Serial RX error: {e}")
-                time.sleep(0.01)
+                self.get_logger().warn(f"Serial RX error: {e} (will reconnect)")
+                self._close_serial()
+                time.sleep(0.05)
 
     def _handle_line(self, line: str):
         parts = line.split()
@@ -371,6 +398,7 @@ class HardwareNode(Node):
     def destroy_node(self):
         # threadleri durdur
         self._stop_evt.set()
+
         try:
             if self._tx_thread.is_alive():
                 self._tx_thread.join(timeout=0.5)
@@ -379,11 +407,7 @@ class HardwareNode(Node):
         except Exception:
             pass
 
-        try:
-            if self.ser and self.ser.is_open:
-                self.ser.close()
-        except Exception:
-            pass
+        self._close_serial()
 
         super().destroy_node()
 

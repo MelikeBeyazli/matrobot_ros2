@@ -80,9 +80,9 @@ def generate_launch_description():
             'channel_type': 'serial',
             'serial_port': lidar_port,
             'serial_baudrate': 1000000,
-            'frame_id': 'lidar2d_link',
+            'frame_id': 'lidar_link',
             'angle_compensate': True,
-            'scan_mode': 'DenseBoost'
+            'scan_mode': 'DenseBoost',
             'inverted':True,
         }]
     )

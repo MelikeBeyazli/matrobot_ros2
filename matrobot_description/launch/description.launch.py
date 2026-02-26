@@ -3,7 +3,7 @@ import os
 
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument
-from launch.conditions import IfCondition
+from launch.conditions import IfCondition, UnlessCondition
 from launch.substitutions import LaunchConfiguration, Command
 
 from ament_index_python.packages import get_package_share_directory
@@ -22,7 +22,7 @@ def generate_launch_description():
     # Launch arguments
     # ========================
     use_sim_time = LaunchConfiguration('use_sim_time')
-    use_rviz     = LaunchConfiguration('use_rviz')
+    use_rviz = LaunchConfiguration('use_rviz')
 
     declare_sim_time = DeclareLaunchArgument(
         'use_sim_time',
@@ -46,7 +46,11 @@ def generate_launch_description():
     )
 
     robot_description = ParameterValue(
-        Command(['xacro ', xacro_path]),
+        Command([
+            'xacro ',
+            xacro_path,
+            ' use_gazebo:=', use_sim_time
+        ]),
         value_type=str
     )
 
@@ -65,7 +69,7 @@ def generate_launch_description():
     )
 
     # ========================
-    # Joint State Publisher Gui
+    # Joint State Publisher
     # ========================
     joint_state_publisher = Node(
         package='joint_state_publisher',
@@ -73,6 +77,7 @@ def generate_launch_description():
         name='joint_state_publisher',
         output='screen',
         parameters=[{'use_sim_time': use_sim_time}],
+        condition=UnlessCondition(use_sim_time),
     )
 
     # ========================
@@ -98,6 +103,6 @@ def generate_launch_description():
         declare_sim_time,
         declare_rviz,
         robot_state_publisher,
+        joint_state_publisher,
         rviz,
     ])
-
