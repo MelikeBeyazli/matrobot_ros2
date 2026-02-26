@@ -27,6 +27,11 @@ def yaw_to_quat(yaw: float) -> Quaternion:
     return q
 
 
+def wrap_angle_pi(a: float) -> float:
+    """Wrap angle to [-pi, pi]."""
+    return (a + math.pi) % (2.0 * math.pi) - math.pi
+
+
 class HardwareNode(Node):
     def __init__(self):
         super().__init__('hardware_node')
@@ -35,7 +40,7 @@ class HardwareNode(Node):
         # Parameters
         # -------------------------
         self.declare_parameter('serial_port', '/dev/ttyUSB0')
-        self.declare_parameter('baudrate', 115200)
+        self.declare_parameter('ardu_baudrate', 115200)
 
         self.declare_parameter('left_joint_name', 'left_wheel_joint')
         self.declare_parameter('right_joint_name', 'right_wheel_joint')
@@ -82,7 +87,7 @@ class HardwareNode(Node):
         # Pull params
         # -------------------------
         self.port = str(self.get_parameter('serial_port').value)
-        self.baudrate = int(self.get_parameter('baudrate').value)
+        self.ardu_baudrate = int(self.get_parameter('ardu_baudrate').value)
 
         self.left_joint_name = str(self.get_parameter('left_joint_name').value)
         self.right_joint_name = str(self.get_parameter('right_joint_name').value)
@@ -177,7 +182,7 @@ class HardwareNode(Node):
         try:
             self.ser = serial.Serial(
                 port=self.port,
-                baudrate=self.baudrate,
+                baudrate=self.ardu_baudrate,  # FIX: pyserial uses baudrate
                 timeout=self.serial_timeout_s,
                 write_timeout=self.serial_write_timeout_s,
             )
@@ -187,11 +192,15 @@ class HardwareNode(Node):
             except Exception:
                 pass
 
-            self.get_logger().info(f"Serial opened: {self.port} @ {self.baudrate}")
+            self.get_logger().info(f"Serial opened: {self.port} @ {self.ardu_baudrate}")
             return True
         except Exception as e:
             self._close_serial()
-            self.get_logger().warn(f"Serial not available ({self.port}): {e}")
+            # rclpy logger has .warn in some distros; .warning is safer if available
+            try:
+                self.get_logger().warning(f"Serial not available ({self.port}): {e}")
+            except Exception:
+                self.get_logger().warn(f"Serial not available ({self.port}): {e}")
             return False
 
     def _ensure_serial_connected(self):
@@ -242,7 +251,6 @@ class HardwareNode(Node):
             # Serial yoksa (kablo çıkmışsa vs) tekrar bağlan
             if not self.ser or not self.ser.is_open:
                 self._ensure_serial_connected()
-                # bağlanamadıysa stop/shutdown olabilir
                 time.sleep(0.01)
                 continue
 
@@ -272,7 +280,10 @@ class HardwareNode(Node):
             try:
                 self.ser.write(line.encode("utf-8"))
             except Exception as e:
-                self.get_logger().warn(f"Serial TX error: {e} (will reconnect)")
+                try:
+                    self.get_logger().warning(f"Serial TX error: {e} (will reconnect)")
+                except Exception:
+                    self.get_logger().warn(f"Serial TX error: {e} (will reconnect)")
                 self._close_serial()
                 time.sleep(0.05)
 
@@ -301,7 +312,10 @@ class HardwareNode(Node):
                         self._handle_line(line)
 
             except Exception as e:
-                self.get_logger().warn(f"Serial RX error: {e} (will reconnect)")
+                try:
+                    self.get_logger().warning(f"Serial RX error: {e} (will reconnect)")
+                except Exception:
+                    self.get_logger().warn(f"Serial RX error: {e} (will reconnect)")
                 self._close_serial()
                 time.sleep(0.05)
 
@@ -359,7 +373,7 @@ class HardwareNode(Node):
         yaw_mid = self.yaw + 0.5 * dyaw
         self.x += ds * math.cos(yaw_mid)
         self.y += ds * math.sin(yaw_mid)
-        self.yaw += dyaw
+        self.yaw = wrap_angle_pi(self.yaw + dyaw)
 
         v = self.wheel_radius * 0.5 * (rvel + lvel)
         w = self.wheel_radius * (rvel - lvel) / max(self.wheel_base, 1e-9)
@@ -400,9 +414,9 @@ class HardwareNode(Node):
         self._stop_evt.set()
 
         try:
-            if self._tx_thread.is_alive():
+            if hasattr(self, "_tx_thread") and self._tx_thread.is_alive():
                 self._tx_thread.join(timeout=0.5)
-            if self._rx_thread.is_alive():
+            if hasattr(self, "_rx_thread") and self._rx_thread.is_alive():
                 self._rx_thread.join(timeout=0.5)
         except Exception:
             pass

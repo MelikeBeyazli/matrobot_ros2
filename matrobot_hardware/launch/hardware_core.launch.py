@@ -24,7 +24,7 @@ def generate_launch_description():
     # ==================================================
     serial_port  = LaunchConfiguration('serial_port')
     lidar_port   = LaunchConfiguration('lidar_port')  
-    baudrate = LaunchConfiguration('baudrate')
+    ardu_baudrate = LaunchConfiguration('ardu_baudrate')
     publish_tf = LaunchConfiguration('publish_tf')
 
     declare_args = [
@@ -32,7 +32,7 @@ def generate_launch_description():
         DeclareLaunchArgument('serial_port', default_value='/dev/ttyArduino'),
         DeclareLaunchArgument('lidar_port', default_value='/dev/ttyLIDAR'),
         DeclareLaunchArgument('publish_tf', default_value='false'),
-        DeclareLaunchArgument('baudrate', default_value='115200'),
+        DeclareLaunchArgument('ardu_baudrate', default_value='115200'),
 
     ]
 
@@ -49,7 +49,7 @@ def generate_launch_description():
             hardware_config,
             {
                 'serial_port': serial_port,
-                'baudrate': baudrate,
+                'ardu_baudrate': ardu_baudrate,
                 'publish_tf': publish_tf,
             }
         ]

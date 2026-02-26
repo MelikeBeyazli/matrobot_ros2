@@ -1,7 +1,7 @@
 hardware_node:
   ros__parameters:
     port: "/dev/ttyArduino"
-    baudrate: 115200
+    ardu_baudrate: 115200
 
     use_imu: false #Arduino ile imu bağlanılırsa true
 
