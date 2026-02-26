@@ -1,0 +1,321 @@
+bt_navigator:
+# Behavior Tree tabanlı navigasyon yöneticisi: hedefe gitme, çoklu waypoint, hata yönetimi ve görev akışını koordine eder
+  ros__parameters:
+    global_frame: map                    # Global frame
+    robot_base_frame: base_footprint     # Robot base frame
+    odom_topic: /odometry/local          # Odom topic
+    transform_tolerance: 0.1             # TF toleransı
+    bt_loop_duration: 20                 # BT döngü süresi (ms)
+    default_server_timeout: 20           # Aksiyon zaman aşımı
+    wait_for_service_timeout: 1000       # Service timeout
+    action_server_result_timeout: 900.0  # Sonuç bekleme süresi
+    navigators: ["navigate_through_poses"] # BT modları
+    navigate_to_pose:
+      plugin: "nav2_bt_navigator::NavigateToPoseNavigator" # Pozisyona git
+    navigate_through_poses:
+      plugin: "nav2_bt_navigator::NavigateThroughPosesNavigator" # Çoklu pozisyon
+    error_code_names:
+      - compute_path_error_code
+      - follow_path_error_code
+controller_server:
+# Global planı takip ederek robot için anlık hız (cmd_vel) komutlarını üreten kontrol sunucusu
+  ros__parameters:
+    controller_frequency: 20.0           # Kontrol döngü frekansı
+    costmap_update_timeout: 0.30         # Costmap timeout
+    min_x_velocity_threshold: 0.01       # Minimum x hız eşiği
+    min_y_velocity_threshold: 0.0        # Minimum y hız eşiği
+    min_theta_velocity_threshold: 0.10   # Minimum açısal hız
+    failure_tolerance: 0.3               # Hata toleransı
+    progress_checker_plugins: ["progress_checker"] # İlerleme kontrol
+    goal_checker_plugins: ["general_goal_checker"] # Hedef kontrol
+    controller_plugins: ["FollowPath"]   # MPPI plugin
+    use_realtime_priority: false         # RT kullanılsın mı?
+    progress_checker:
+      plugin: "nav2_controller::SimpleProgressChecker" # İlerleme checker
+      required_movement_radius: 0.2      # Minimum hareket yarıçapı
+      movement_time_allowance: 15.0      # Hareket süresi
+    general_goal_checker:
+      stateful: false                    # Durum kaydı
+      plugin: "nav2_controller::SimpleGoalChecker"
+      xy_goal_tolerance: 0.30            # x-y toleransı
+      yaw_goal_tolerance: 0.30           # Yaw toleransı   
+    FollowPath:
+      plugin: "nav2_mppi_controller::MPPIController"
+      time_steps: 45                     # Daha düşük hesap yükü, yeterli doğruluk      
+      model_dt: 0.05                     # Zaman adımı (ideal)
+      batch_size: 1500                   # AGV için yeterli sampling (2000 gereksiz ağır)
+      ax_max: 50.0                       # ileri ivme (AGV için ideal)
+      ax_min: -100.0                     # frenleme/geri ivme
+      ay_max: 0.0                        # diff-drive olduğu için kullanılmıyor
+      ay_min: 0.0
+      az_max: 100.0                       # yaw ivmesi (smooth dönüş)
+      vx_std: 0.25                       # daha az gürültü → daha stabil
+      vy_std: 0.0                        # diff-drive’da yok
+      wz_std: 0.8                        # dönüş gürültüsü azaltıldı
+      vx_max: 200.0                      # ileri hız sınırı (VS ile aynı)
+      vx_min: -100.0                     # geri hız sınırı (VS ile aynı)
+      vy_max: 0.0                        # diff-drive
+      wz_max: 200.0                      # dönüş hızı sınırı (VS max 1.0 → biraz altında)
+      iteration_count: 2                 # 1 → çok zayıf, 2 → çok daha iyi kontrol
+      prune_distance: 0.5                # daha yakın budama, keskin hataları önler
+      transform_tolerance: 0.15
+      temperature: 0.4                   # sampling kararlılığı arttırır
+      gamma: 0.015
+      motion_model: "DiffDrive"
+      visualize: false
+      regenerate_noises: true
+      TrajectoryVisualizer:
+        trajectory_step: 5               # Görsel adım
+        time_step: 3                     # Zaman adımı  
+      AckermannConstraints:
+        min_turning_r: 0.80              # Min dönüş yarıçapı
+      critics: [
+        "ConstraintCritic", "CostCritic", "GoalCritic",
+        "GoalAngleCritic", "PathAlignCritic", "PathFollowCritic",
+        "PathAngleCritic", "PreferForwardCritic"]
+      ConstraintCritic:
+        enabled: true                    # Kısıtlama aktif
+        cost_power: 1
+        cost_weight: 4.0        
+      GoalCritic:
+        enabled: true                    # Hedef maliyeti
+        cost_power: 1
+        cost_weight: 5.0
+        threshold_to_consider: 1.0  
+      GoalAngleCritic:
+        enabled: true                    # Hedef yönü maliyeti
+        cost_power: 1
+        cost_weight: 3.0
+        threshold_to_consider: 0.5 
+      PreferForwardCritic:
+        enabled: true                    # İleri yönü tercih et
+        cost_power: 1
+        cost_weight: 5.0
+        threshold_to_consider: 0.5 
+      CostCritic:
+        enabled: true                    # Costmap maliyetleri
+        cost_power: 1
+        cost_weight: 3.81
+        near_collision_cost: 253
+        critical_cost: 300.0
+        consider_footprint: false
+        collision_cost: 1000000.0
+        near_goal_distance: 1.0
+        trajectory_point_step: 2
+      PathAlignCritic:
+        enabled: true
+        cost_power: 1
+        cost_weight: 10.0
+        max_path_occupancy_ratio: 0.05
+        trajectory_point_step: 4
+        threshold_to_consider: 0.5
+        offset_from_furthest: 20
+        use_path_orientations: false
+      PathFollowCritic:
+        enabled: true
+        cost_power: 1
+        cost_weight: 5.0
+        offset_from_furthest: 5
+        threshold_to_consider: 1.0
+      PathAngleCritic:
+        enabled: true
+        cost_power: 1
+        cost_weight: 2.0
+        offset_from_furthest: 4
+        threshold_to_consider: 0.5
+        max_angle_to_furthest: 1.0
+        mode: 0
+velocity_smoother:
+# Controller’dan gelen hız komutlarını fiziksel sınırlar içinde yumuşatarak robotun güvenli ve stabil hareket etmesini sağlar
+  ros__parameters:
+    smoothing_frequency: 25.0              # Daha pürüzsüz kontrol için optimize edildi
+    scale_velocities: False
+    feedback: "OPEN_LOOP"
+    max_velocity: [200.0, 0.0, 200.0]          # x ileri 1.8 m/s, yaw 1.9 rad/s
+    min_velocity: [-100.0, 0.0, -200.0]        # geri 1.3 m/s, ters yaw 1.6 rad/s
+    max_accel: [50.0, 0.0, 100.0]             # Ağır AGV için ideal hızlanma
+    max_decel: [-100.0, 0.0, -100.0]           # Frenleme daha hızlı olmalı (güvenlik)
+    odom_topic: "/odometry/local"
+    odom_duration: 0.2                     # Gürültülü odom için daha toleranslı
+    deadband_velocity: [0.02, 0.0, 0.02]   # Çok küçük hızları yok sayar (titremeyi engeller)
+    velocity_timeout: 0.5                  # 0.5 sn komut gelmezse robot durur
+local_costmap:
+# Robotun etrafındaki yakın çevrede, anlık engelleri ve güvenli geçiş alanlarını temsil eden yerel maliyet haritası
+  local_costmap:
+    ros__parameters:
+      update_frequency: 5.0              # Local costmap update rate
+      publish_frequency: 2.0             # Yayın frekansı
+      global_frame: odom                 # Global frame
+      robot_base_frame: base_footprint   # Robot frame
+      rolling_window: true               # Hareket eden pencere
+      width: 10                          # Genişlik
+      height: 10                         # Yükseklik
+      resolution: 0.05                   # Hücre çözünürlüğü
+      robot_radius: 0.6                  # Robot yarıçapı
+      plugins: ["voxel_layer", "inflation_layer"]
+      inflation_layer:
+        plugin: "nav2_costmap_2d::InflationLayer"  # Şişirme katmanı
+        cost_scaling_factor: 3.0         # Maliyet artış katsayısı
+        inflation_radius: 1.0            # Güvenli alan yarıçapı
+      voxel_layer:
+        plugin: "nav2_costmap_2d::VoxelLayer"
+        enabled: True
+        publish_voxel_map: True
+        origin_z: 0.0
+        z_resolution: 0.05
+        z_voxels: 16
+        max_obstacle_height: 2.0
+        mark_threshold: 0
+        observation_sources: scan
+        scan:
+          topic: /scan
+          max_obstacle_height: 2.0
+          clearing: True
+          marking: True
+          data_type: "LaserScan"
+          raytrace_max_range: 3.0
+          raytrace_min_range: 0.05
+          obstacle_max_range: 2.5
+          obstacle_min_range: 0.05
+global_costmap:
+# Harita üzerinde uzun mesafeli planlama için statik ve dinamik engelleri içeren küresel maliyet haritası
+  global_costmap:
+    ros__parameters:
+      update_frequency: 1.0
+      publish_frequency: 1.0
+      global_frame: map
+      robot_base_frame: base_footprint
+      robot_radius: 0.6                    
+      resolution: 0.05
+      width: 60                       
+      height: 60                      
+      rolling_window: true
+      track_unknown_space: true
+      plugins: ["obstacle_layer", "inflation_layer"]
+      obstacle_layer:
+        plugin: "nav2_costmap_2d::ObstacleLayer"
+        enabled: True
+        observation_sources: scan
+        scan:
+          topic: /scan
+          max_obstacle_height: 2.0
+          clearing: True
+          marking: True
+          data_type: "LaserScan"
+          raytrace_max_range: 10.0
+          raytrace_min_range: 0.05
+          obstacle_max_range: 8.0
+          obstacle_min_range: 0.05
+      inflation_layer:
+        plugin: "nav2_costmap_2d::InflationLayer"
+        cost_scaling_factor: 3.0
+        inflation_radius: 1.0
+      always_send_full_costmap: True
+behavior_server:
+# Navigasyon sırasında dönme, geri gitme, bekleme gibi temel davranışları yöneten davranış sunucusu
+  ros__parameters:
+    local_costmap_topic: local_costmap/costmap_raw
+    global_costmap_topic: global_costmap/costmap_raw
+    local_footprint_topic: local_costmap/published_footprint
+    global_footprint_topic: global_costmap/published_footprint
+    cycle_frequency: 10.0
+    behavior_plugins: ["spin", "backup", "drive_on_heading", "assisted_teleop", "wait"]
+    spin:
+      plugin: "nav2_behaviors::Spin"
+    backup:
+      plugin: "nav2_behaviors::BackUp"
+    drive_on_heading:
+      plugin: "nav2_behaviors::DriveOnHeading"
+    wait:
+      plugin: "nav2_behaviors::Wait"
+    assisted_teleop:
+      plugin: "nav2_behaviors::AssistedTeleop"
+    local_frame: odom
+    global_frame: map
+    robot_base_frame: base_footprint
+    transform_tolerance: 0.1
+    simulate_ahead_time: 2.0
+    max_rotational_vel: 1.0
+    min_rotational_vel: 0.4
+    rotational_acc_lim: 3.2             # spin sırasında sert silkelenme görürsen,ilk bakacağın yer
+waypoint_follower:
+# Tanımlı waypoint dizisini sırayla takip ederek her noktada istenen görevi (bekleme vb.) yürüten modül
+  ros__parameters:
+    loop_rate: 20
+    stop_on_failure: false
+    action_server_result_timeout: 900.0
+    waypoint_task_executor_plugin: "wait_at_waypoint"
+
+    wait_at_waypoint:
+      plugin: "nav2_waypoint_follower::WaitAtWaypoint"
+      enabled: True
+      waypoint_pause_duration: 200      # Bekleme süresi
+collision_monitor:
+# Robotun yakın çevresindeki olası çarpışmaları öngörerek hız komutlarını güvenli şekilde durduran son güvenlik katmanı
+  ros__parameters:
+    base_frame_id: "base_footprint"         # Robot taban frame
+    odom_frame_id: "odom"                   # Odom frame
+    cmd_vel_in_topic: "cmd_vel_smoothed"    # Giriş hız topic
+    cmd_vel_out_topic: "cmd_vel"            # Çıkış hız topic
+    state_topic: "collision_monitor_state"  # Durum topic
+    transform_tolerance: 0.2                # TF toleransı
+    source_timeout: 1.0                     # Sensör timeout
+    base_shift_correction: True             # Base shift düzeltmesi
+    stop_pub_timeout: 2.0                   # Durma timeout
+    polygons: ["FootprintApproach"]
+    FootprintApproach:
+      type: "polygon"
+      action_type: "approach"
+      footprint_topic: "/local_costmap/published_footprint"
+      time_before_collision: 1.2
+      simulation_time_step: 0.1
+      min_points: 6
+      visualize: False
+      enabled: True
+    observation_sources: ["scan"]
+    scan:
+      type: "scan"
+      topic: "scan"
+      min_height: 0.15
+      max_height: 2.0
+      enabled: True
+docking_server:
+# Robotun şarj istasyonuna güvenli ve hassas şekilde yanaşmasını ve ayrılmasını yöneten docking kontrol sunucusu
+  ros__parameters:
+    controller_frequency: 50.0
+    initial_perception_timeout: 5.0
+    wait_charge_timeout: 5.0
+    dock_approach_timeout: 30.0
+    undock_linear_tolerance: 0.05
+    undock_angular_tolerance: 0.1
+    max_retries: 3
+    base_frame: "base_footprint"
+    fixed_frame: "odom"
+    dock_backwards: false
+    dock_plugins: ['simple_charging_dock']
+    simple_charging_dock:
+      plugin: 'opennav_docking::SimpleChargingDock'
+      docking_threshold: 0.05
+      staging_x_offset: -0.7
+      use_external_detection_pose: true
+      use_battery_status: false
+      use_stall_detection: false
+      external_detection_timeout: 1.0
+      external_detection_translation_x: -0.18
+      external_detection_translation_y: 0.0
+      external_detection_rotation_roll: -1.57
+      external_detection_rotation_pitch: -1.57
+      external_detection_rotation_yaw: 0.0
+      filter_coef: 0.1
+    controller:
+      k_phi: 3.0
+      k_delta: 2.0
+      v_linear_min: 0.1
+      v_linear_max: 0.5
+      use_collision_detection: true
+      costmap_topic: "local_costmap/costmap_raw"
+      footprint_topic: "local_costmap/published_footprint"
+      transform_tolerance: 0.1
+      projection_time: 5.0
+      simulation_step: 0.1
+      dock_collision_threshold: 0.3

@@ -1,0 +1,40 @@
+<?xml version="1.0"?>
+<package format="3">
+
+  <name>matrobot_navigation</name>
+  <version>0.0.1</version>
+
+  <description>
+    Navigation launch configurations for the Matrobot Mobile Robot.
+    This package provides map-based and mapless navigation using Nav2.
+  </description>
+
+  <maintainer email="beyazlimelike@gmail.com">Melike Beyazlı</maintainer>
+  <license>MIT</license>
+
+  <!-- Build system -->
+  <buildtool_depend>ament_cmake</buildtool_depend>
+
+  <!-- Launch system -->
+  <exec_depend>launch</exec_depend>
+  <exec_depend>launch_ros</exec_depend>
+  <exec_depend>ament_index_python</exec_depend>
+
+  <!-- Navigation stack -->
+  <exec_depend>nav2_bringup</exec_depend>
+  <exec_depend>nav2_common</exec_depend>
+
+  <!-- Messages -->
+  <exec_depend>nav_msgs</exec_depend>
+  <exec_depend>geometry_msgs</exec_depend>
+  <exec_depend>sensor_msgs</exec_depend>
+
+  <!-- Visualization -->
+  <exec_depend>rviz2</exec_depend>
+
+  <export>
+    <build_type>ament_cmake</build_type>
+  </export>
+
+</package>
+
