@@ -186,7 +186,7 @@ Gazebo → Dinamik ve fiziksel davranış
 
 # 4️⃣ Matrobot Xacro Dosyasının Teknik Analizi
 
-![Image](images/matrobot.png)
+![Image](images/matrobot.jpeg)
 
 ## 4.1 Dosya Başlığı
 
