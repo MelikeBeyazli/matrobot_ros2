@@ -126,7 +126,7 @@ Hedef kombinasyonumuz:
 
 Bu nedenle eğitim boyunca Gazebo Harmonic kullanılacaktır.
 
-![Simülasyon Yazılımları Örnek Görseli]([images/a_composite_digital_digital_image_displays_four_po.png](https://gazebosim.org/docs/latest/_images/chassis.png))
+![Simülasyon Yazılımları Örnek Görseli](https://camo.githubusercontent.com/2fa932227a0d21e6955916a2b507f7bf9ea8f5fbd58637d63c3747057647390d/68747470733a2f2f67617a65626f73696d2e6f72672f6173736574732f696d616765732f67616c6c6572792f67616c6c6572795f302e706e67)
 ---
 
 # 6️⃣ Gazebo Harmonic Kurulumu
