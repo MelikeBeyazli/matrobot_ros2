@@ -57,21 +57,13 @@ sudo apt install -y \
 
 ---
 
-## 3) (Simülasyon kullanacaksan) Gazebo + ROS köprüsü
-
-Dokümanlarınız Gazebo Harmonic + ROS 2 Jazzy kombinasyonundan bahsediyor. ([GitHub][6])
-ROS tarafındaki en pratik kurulum “ros-gz” meta paketi:
+## 3) Gazebo + ROS köprüsü
 
 ```bash
 sudo apt install -y
     ros-$ROS_DISTRO-ros-gz \
     ros-$ROS_DISTRO-ros-gz-bridge
 ```
-
-Bu paket ROS–Gazebo entegrasyonu için önerilen Gazebo kütüphanelerini kurar. ([gazebosim.org][7])
-Ayrıca ROS+Gazebo Sim için `ros_gz_sim` paket dokümantasyonu da bu entegrasyonu anlatır. ([ROS][8])
-Bridge (köprü) kullanımı `ros_gz_bridge` ile yapılır. ([gazebosim.org][9])
-
 ---
 
 ## 4) Workspace oluştur ve repoyu indir
