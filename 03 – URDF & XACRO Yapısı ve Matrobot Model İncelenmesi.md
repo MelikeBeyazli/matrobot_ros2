@@ -76,6 +76,7 @@ Her joint mutlaka şunları içerir:
 ---
 
 # ✔ Inertial (Kütle + Atalet)
+![Image](images/compute_inertia.png)
 
 Fiziğin en kritik kısmıdır.
 
