@@ -171,7 +171,7 @@ Yüksek update rate → daha gerçekçi ama daha fazla CPU.
 ---
 
 # 🎨 URDF – Gazebo Yapı İlişkisi
-![Image](https://www.researchgate.net/publication/352871117/figure/fig2/AS%3A11431281159661094%401684447882146/Architecture-of-ROS-Gazebo-interaction-Mittal-2018.png)
+![Image](https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQg-UZ1fA-bdMiAQBnPyGTRGkM-ADbmT23OeQ&s)
 
 Bu yapı:
 
