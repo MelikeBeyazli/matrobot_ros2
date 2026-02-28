@@ -45,8 +45,8 @@ def generate_launch_description():
         default_value=os.path.join(
             pkg_nav,
             'maps',
-            'map_1768051123',
-            'map_1768051123.yaml'
+            'default_map',
+            'default_map.yaml'
         ),
         description='Full path to map YAML file'
     )
@@ -73,9 +73,9 @@ def generate_launch_description():
             )
         ),
         launch_arguments={
-            'map': map_yaml,
             'use_sim_time': use_sim_time,
-            'params_file': params_file
+            'params_file': params_file,
+            'map': map_yaml,
         }.items()
     )
 

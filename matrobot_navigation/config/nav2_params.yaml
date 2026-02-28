@@ -14,7 +14,7 @@ amcl:
     global_frame_id: "map"               # Global frame
     lambda_short: 0.1                    # Z-short exponential damper
     laser_likelihood_max_dist: 3.0       # Likelihood field maksimum mesafe
-    laser_max_range: 30.0                # Lazer maksimum algılama mesafesi
+    laser_max_range: 40                # Lazer maksimum algılama mesafesi
     laser_min_range: 0.05                # Lazer minimum algılama mesafesi
     laser_model_type: "likelihood_field" # LIDAR modeli
     max_beams: 60                        # AMCL ışın sayısı
@@ -72,7 +72,7 @@ controller_server:
     use_realtime_priority: false         # RT kullanılsın mı?
     progress_checker:
       plugin: "nav2_controller::SimpleProgressChecker" # İlerleme checker
-      required_movement_radius: 0.5      # Minimum hareket yarıçapı
+      required_movement_radius: 0.3      # Minimum hareket yarıçapı
       movement_time_allowance: 10.0      # Hareket süresi
     general_goal_checker:
       stateful: True                     # Durum kaydı
@@ -84,18 +84,27 @@ controller_server:
       time_steps: 45                     # Daha düşük hesap yükü, yeterli doğruluk      
       model_dt: 0.05                     # Zaman adımı (ideal)
       batch_size: 1500                   # AGV için yeterli sampling (2000 gereksiz ağır)
-      ax_max: 50.0                       # ileri ivme (AGV için ideal)
-      ax_min: -100.0                     # frenleme/geri ivme
+
+      ax_max: 0.6                       # ileri ivme (AGV için ideal)
+      ax_min: -1.2                     # frenleme/geri ivme
+
       ay_max: 0.0                        # diff-drive olduğu için kullanılmıyor
       ay_min: 0.0
-      az_max: 100.0                       # yaw ivmesi (smooth dönüş)
+
+      az_max: 1.5                       # yaw ivmesi (smooth dönüş)
+
       vx_std: 0.25                       # daha az gürültü → daha stabil
       vy_std: 0.0                        # diff-drive’da yok
+
       wz_std: 0.8                        # dönüş gürültüsü azaltıldı
-      vx_max: 200.0                      # ileri hız sınırı (VS ile aynı)
-      vx_min: -100.0                     # geri hız sınırı (VS ile aynı)
+
+      vx_max: 0.7                      # ileri hız sınırı (VS ile aynı)
+      vx_min: -0.4                     # geri hız sınırı (VS ile aynı)
+
       vy_max: 0.0                        # diff-drive
-      wz_max: 200.0                      # dönüş hızı sınırı (VS max 1.0 → biraz altında)
+
+      wz_max: 0.7                      # dönüş hızı sınırı (VS max 1.0 → biraz altında)
+
       iteration_count: 2                 # 1 → çok zayıf, 2 → çok daha iyi kontrol
       prune_distance: 1.0                # daha yakın budama, keskin hataları önler
       transform_tolerance: 0.15
@@ -108,7 +117,7 @@ controller_server:
         trajectory_step: 5               # Görsel adım
         time_step: 3                     # Zaman adımı  
       AckermannConstraints:
-        min_turning_r: 0.80              # Min dönüş yarıçapı
+        min_turning_r: 0.40              # Min dönüş yarıçapı
       critics: [
         "ConstraintCritic", "CostCritic", "GoalCritic",
         "GoalAngleCritic", "PathAlignCritic", "PathFollowCritic",
@@ -171,14 +180,20 @@ velocity_smoother:
     smoothing_frequency: 25.0              # Daha pürüzsüz kontrol için optimize edildi
     scale_velocities: False
     feedback: "OPEN_LOOP"
-    max_velocity: [200.0, 0.0, 200.0]          # x ileri 1.8 m/s, yaw 1.9 rad/s
-    min_velocity: [-100.0, 0.0, -200.0]        # geri 1.3 m/s, ters yaw 1.6 rad/s
-    max_accel: [50.0, 0.0, 100.0]             # Ağır AGV için ideal hızlanma
-    max_decel: [-100.0, 0.0, -100.0]           # Frenleme daha hızlı olmalı (güvenlik)
+
+    max_velocity: [0.7, 0.0, 0.7]          # x ileri 1.8 m/s, yaw 1.9 rad/s
+    min_velocity: [-0.4, 0.0, -0.7]        # geri 1.3 m/s, ters yaw 1.6 rad/s
+
+    max_accel:  [0.6, 0.0, 1.5]            # Ağır AGV için ideal hızlanma
+    max_decel:  [1.2, 0.0, 1.8]            # Frenleme daha hızlı olmalı (güvenlik)
+
+    deadband_velocity: [0.02, 0.0, 0.03]   # Çok küçük hızları yok sayar (titremeyi engeller)
+    velocity_timeout: 0.5                  # 0.5 sn komut gelmezse robot durur
+  
+
     odom_topic: "odometry/local"
     odom_duration: 0.2                     # Gürültülü odom için daha toleranslı
-    deadband_velocity: [0.02, 0.0, 0.02]   # Çok küçük hızları yok sayar (titremeyi engeller)
-    velocity_timeout: 0.5                  # 0.5 sn komut gelmezse robot durur
+
 local_costmap:
 # Robotun etrafındaki yakın çevrede, anlık engelleri ve güvenli geçiş alanlarını temsil eden yerel maliyet haritası
   local_costmap:
@@ -191,12 +206,12 @@ local_costmap:
       width: 5                          # Genişlik
       height: 5                         # Yükseklik
       resolution: 0.05                   # Hücre çözünürlüğü
-      robot_radius: 0.6                  # Robot yarıçapı
+      robot_radius: 0.3                  # Robot yarıçapı
       plugins: ["static_layer", "voxel_layer", "inflation_layer"]
       inflation_layer:
         plugin: "nav2_costmap_2d::InflationLayer"  # Şişirme katmanı
         cost_scaling_factor: 3.0         # Maliyet artış katsayısı
-        inflation_radius: 1.0            # Güvenli alan yarıçapı
+        inflation_radius: 0.4            # Güvenli alan yarıçapı
       voxel_layer:
         plugin: "nav2_costmap_2d::VoxelLayer"
         enabled: True
@@ -213,9 +228,9 @@ local_costmap:
           clearing: True
           marking: True
           data_type: "LaserScan"
-          raytrace_max_range: 3.0
+          raytrace_max_range: 1.0
           raytrace_min_range: 0.05
-          obstacle_max_range: 2.5
+          obstacle_max_range: 0.5
           obstacle_min_range: 0.05
       static_layer:
         plugin: "nav2_costmap_2d::StaticLayer"
@@ -229,7 +244,7 @@ global_costmap:
       publish_frequency: 1.0
       global_frame: map
       robot_base_frame: base_footprint
-      robot_radius: 0.6
+      robot_radius: 0.4
       resolution: 0.05
       width: 5                          # Genişlik
       height: 5                         # Yükseklik
@@ -245,9 +260,9 @@ global_costmap:
           clearing: True
           marking: True
           data_type: "LaserScan"
-          raytrace_max_range: 5.0
+          raytrace_max_range: 2.0
           raytrace_min_range: 0.05
-          obstacle_max_range: 4.0
+          obstacle_max_range: 1.0
           obstacle_min_range: 0.05
       static_layer:
         plugin: "nav2_costmap_2d::StaticLayer"

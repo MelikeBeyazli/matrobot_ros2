@@ -96,7 +96,10 @@ def generate_launch_description():
         output='screen',
         arguments=[
             '-topic', 'robot_description',
-            '-name', 'matrobot'
+            '-name', 'matrobot',
+            '-x', '4.36',
+            '-y', '-2.23',
+            '-Y', '3.14',
         ],
     )
 
