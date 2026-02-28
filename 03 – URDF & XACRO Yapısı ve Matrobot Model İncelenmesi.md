@@ -171,7 +171,8 @@ Yüksek update rate → daha gerçekçi ama daha fazla CPU.
 ---
 
 # 🎨 URDF – Gazebo Yapı İlişkisi
-![Image](https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQg-UZ1fA-bdMiAQBnPyGTRGkM-ADbmT23OeQ&s)
+
+![Image]([https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQg-UZ1fA-bdMiAQBnPyGTRGkM-ADbmT23OeQ&s](https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRLK9RP1kx1IGVSWdKbT50yw3Z8wVxckAZjkw&s))
 
 Bu yapı:
 
