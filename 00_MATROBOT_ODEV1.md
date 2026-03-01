@@ -30,7 +30,7 @@ Ubuntu kullanıyorsanız bu bölümü geçebilirsiniz.
 WSL kullanıyorsanız dosyaları VSCode ile açmanız önerilir.
 
 📎 Kurulum rehberi:
-🔗 [https://github.com/MelikeBeyazli/matrobot_ros2/blob/main/images/Daha%20kolay%20dosya%20düzenlemek%20için%20VSCODE-WSL%20kurulumu.pdf](https://github.com/MelikeBeyazli/matrobot_ros2/blob/main/images/Daha%20kolay%20dosya%20düzenlemek%20için%20VSCODE-WSL%20kurulumu.pdf)
+🔗 [https://github.com/MelikeBeyazli/matrobot_ros2/blob/main/images/VSCODE-WSL.pdf](https://github.com/MelikeBeyazli/matrobot_ros2/blob/main/images/VSCODE-WSL.pdf)
 
 ---
 
