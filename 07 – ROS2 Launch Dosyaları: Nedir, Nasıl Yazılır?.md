@@ -299,13 +299,3 @@ Bir sim launch dosyasında genelde şu parçalar olur:
 * Sim launch dosyalarının genel mantığı
 
 ---
-
-## Next Topic →
-
-Sonraki derslerde:
-
-1. **GZ Bridge (ROS2 ↔ Gazebo) ayrı ders**
-2. Simülasyonda node yazımı ve test (ör: cmd_vel testleri, topic kontrol, TF kontrol)
-
-```
-```
