@@ -1,62 +1,58 @@
-
 # 08 – ROS ↔ Gazebo İletişimi (GZ Bridge)
 
-Bu derste ROS2 ile Gazebo simülasyonu arasında nasıl veri alışverişi yapıldığını öğreneceğiz.
+Bu derste **ROS 2 ile Gazebo simülasyonu arasında veri alışverişinin nasıl yapıldığını** öğreneceğiz.
 
-Gazebo simülasyonu kendi mesaj sistemini kullanır.  
-ROS ise kendi mesaj tiplerine sahiptir.
+Gazebo simülasyonu kendi **mesaj sistemini** kullanır.
+ROS ise **farklı mesaj tiplerine** sahiptir.
 
-Bu nedenle ROS ile Gazebo arasında doğrudan iletişim kurulamaz.
+Bu nedenle **ROS ile Gazebo arasında doğrudan iletişim kurulamaz.**
 
 Bu problemi çözmek için **ROS–Gazebo Bridge** kullanılır.
 
-
+```
 ROS2 Nodes
-│
-│
+   │
+   │
 ROS Topics
-│
-│
+   │
+   │
 ros_gz_bridge
-│
-│
+   │
+   │
 Gazebo Topics
-│
+   │
 Gazebo Simulation
-
 ```
 
-Bridge sistemi sayesinde ROS ve Gazebo mesajları birbirine çevrilir.
+Bridge sistemi sayesinde **ROS ve Gazebo mesajları birbirine çevrilir.**
 
 ---
 
 # GZ Bridge Nedir?
 
-`ros_gz_bridge` paketi ROS2 ile Gazebo arasında **mesaj çevirisi yapan bir köprüdür.**
+`ros_gz_bridge` paketi, ROS2 ile Gazebo arasında **mesaj çevirisi yapan bir köprüdür.**
 
 Örneğin:
 
-- ROS tarafında `/cmd_vel` yayınlanır
-- Bridge bu mesajı Gazebo mesajına çevirir
-- Gazebo robotu hareket ettirir
+* ROS tarafında `/cmd_vel` mesajı yayınlanır.
+* Bridge bu mesajı Gazebo mesaj tipine çevirir.
+* Gazebo robotu hareket ettirir.
 
-Aynı şekilde sensör verileri de Gazebo’dan ROS’a aktarılır.
+Aynı şekilde **sensör verileri de Gazebo’dan ROS’a aktarılabilir.**
 
-Örnek:
+Örnek veri akışı:
 
 ```
-
 Gazebo LiDAR
-│
-│
+   │
+   │
 LaserScan
-│
-│
+   │
+   │
 ros_gz_bridge
-│
-│
-ROS Topic /scan
-
+   │
+   │
+ROS Topic: /scan
 ```
 
 ---
@@ -65,45 +61,46 @@ ROS Topic /scan
 
 Simülasyonda aşağıdaki veri akışlarını kullanıyoruz.
 
+## ROS → Gazebo
+
+Robot kontrol komutları:
+
+```
+/cmd_vel
 ```
 
-ROS → Gazebo
-cmd_vel
+## Gazebo → ROS
+
+Sensör ve durum verileri:
 
 ```
-```
-
-Gazebo → ROS
 odometry
 tf
 joint_states
 lidar scan
 imu
 clock
-
 ```
 
 ---
 
 # Bridge Konfigürasyonu
 
-Bridge ayarlarını bir **YAML dosyasında** tanımlıyoruz.
+Bridge ayarları bir **YAML dosyasında** tanımlanır.
 
-Bu dosya genellikle:
+Genellikle şu konumda bulunur:
 
 ```
-
 matrobot_simulation/config/gz_bridge.yaml
+```
 
-````
-
-içinde bulunur.
+Bu dosya **ROS topicleri ile Gazebo topiclerini eşleştirir.**
 
 ---
 
-# ROS → Gazebo
+# ROS → Gazebo (Robot Hareketi)
 
-Robotu hareket ettirmek için `/cmd_vel` topic’i Gazebo’ya gönderilir.
+Robotu hareket ettirmek için `/cmd_vel` mesajı Gazebo’ya gönderilir.
 
 ```yaml
 # cmd_vel: ROS -> Gazebo
@@ -112,19 +109,19 @@ Robotu hareket ettirmek için `/cmd_vel` topic’i Gazebo’ya gönderilir.
   ros_type_name: "geometry_msgs/msg/Twist"
   gz_type_name: "gz.msgs.Twist"
   direction: ROS_TO_GZ
-````
+```
 
 Bu yapı sayesinde:
 
 ```
-ROS cmd_vel → Gazebo robot hareketi
+ROS /cmd_vel  →  Gazebo robot hareketi
 ```
 
 ---
 
 # Gazebo → ROS (Odometry)
 
-Gazebo robotun odometry bilgisini üretir ve ROS tarafına gönderir.
+Gazebo robotun **odometry bilgisini** üretir ve ROS tarafına gönderir.
 
 ```yaml
 # odom: Gazebo -> ROS
@@ -140,7 +137,7 @@ Gazebo robotun odometry bilgisini üretir ve ROS tarafına gönderir.
 
 # Gazebo → ROS (TF)
 
-Robotun konumu Gazebo'dan TF olarak ROS tarafına aktarılır.
+Robotun konum bilgisi Gazebo’dan **TF sistemi üzerinden** ROS’a aktarılır.
 
 ```yaml
 # tf: Gazebo -> ROS
@@ -152,13 +149,13 @@ Robotun konumu Gazebo'dan TF olarak ROS tarafına aktarılır.
   lazy: true
 ```
 
-Bu sayede robotun **TF ağacı ROS içinde görünür.**
+Bu sayede robotun **TF ağacı ROS içinde görüntülenebilir.**
 
 ---
 
 # Gazebo → ROS (Joint States)
 
-Robot eklemlerinin pozisyonları ROS’a aktarılır.
+Robotun eklem pozisyonları ROS tarafına aktarılır.
 
 ```yaml
 # joint states
@@ -174,7 +171,7 @@ Robot eklemlerinin pozisyonları ROS’a aktarılır.
 
 # Gazebo → ROS (LiDAR)
 
-Gazebo’daki LiDAR sensörü ROS’a `LaserScan` mesajı gönderir.
+Gazebo’daki LiDAR sensörü ROS’a **LaserScan** mesajı gönderir.
 
 ```yaml
 # lidar
@@ -186,19 +183,17 @@ Gazebo’daki LiDAR sensörü ROS’a `LaserScan` mesajı gönderir.
   lazy: true
 ```
 
-Bu sayede ROS içinde:
+Bu sayede ROS içinde şu topic oluşur:
 
 ```
 /scan
 ```
 
-topic’i oluşur.
-
 ---
 
 # Gazebo → ROS (IMU)
 
-IMU sensör verileri de Gazebo’dan ROS’a aktarılır.
+IMU sensör verileri Gazebo’dan ROS’a aktarılır.
 
 ```yaml
 # imu
@@ -229,7 +224,7 @@ Bu sayede ROS sistemleri **simülasyon zamanını kullanabilir.**
 
 ---
 
-# lazy Parametresi Ne İşe Yarar?
+# `lazy` Parametresi Ne İşe Yarar?
 
 Bridge konfigürasyonunda sık görülen bir parametre:
 
@@ -237,11 +232,39 @@ Bridge konfigürasyonunda sık görülen bir parametre:
 lazy: true
 ```
 
-Bu parametre şunu ifade eder:
+Bu parametre şu anlama gelir:
 
 > Eğer ROS tarafında bu topic’i dinleyen bir node yoksa bridge veri göndermez.
 
-Bu sayede sistem gereksiz mesaj üretmez ve performans artar.
+Bu sayede:
+
+* Gereksiz mesaj üretimi engellenir
+* Sistem performansı artar
+* CPU ve ağ kullanımı azalır
+
+---
+
+# Resmi Dokümantasyon
+
+`ros_gz_bridge` paketi ve desteklenen mesaj tipleri hakkında daha fazla bilgi için resmi ROS dokümantasyonunu inceleyebilirsiniz:
+
+```md
+https://docs.ros.org/en/jazzy/p/ros_gz_bridge/
+```
+
+Özellikle dokümantasyondaki şu bölümde **ROS ve Gazebo arasında çevrilebilen mesaj tiplerinin tam listesi** bulunmaktadır:
+
+```
+The following message types can be bridged for topics
+```
+
+Bu bölümde:
+
+* ROS mesaj tipleri
+* Gazebo mesaj tipleri
+* desteklenen topic eşleşmeleri
+
+detaylı olarak açıklanmaktadır.
 
 ---
 
@@ -249,8 +272,9 @@ Bu sayede sistem gereksiz mesaj üretmez ve performans artar.
 
 Bu derste:
 
-* ROS ile Gazebo’nun farklı mesaj sistemleri kullandığını
-* `ros_gz_bridge` paketinin bu iki sistemi bağladığını
-* Topic eşleştirmelerinin YAML dosyası ile tanımlandığını
-* Robot hareketi ve sensör verilerinin bu bridge üzerinden aktarıldığını öğrendik.
+* ROS ve Gazebo’nun **farklı mesaj sistemleri kullandığını**
+* `ros_gz_bridge` paketinin bu iki sistemi **birbirine bağladığını**
+* Topic eşleştirmelerinin **YAML dosyası ile tanımlandığını**
+* Robot kontrolü ve sensör verilerinin **bridge üzerinden aktarıldığını** öğrendik.
+
 ---
