@@ -254,9 +254,6 @@ https://docs.ros.org/en/jazzy/p/ros_gz_bridge/
 
 Özellikle dokümantasyondaki şu bölümde **ROS ve Gazebo arasında çevrilebilen mesaj tiplerinin tam listesi** bulunmaktadır:
 
-```
-The following message types can be bridged for topics
-```
 
 Bu bölümde:
 
