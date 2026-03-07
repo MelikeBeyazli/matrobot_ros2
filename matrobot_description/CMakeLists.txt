@@ -20,7 +20,6 @@ install(
     rviz
     launch
     urdf
-    meshes
   DESTINATION
     share/${PROJECT_NAME}
 )
@@ -29,4 +28,5 @@ install(
 # Declare package to ROS 2 build system
 # ==================================================
 ament_package()
+
 
