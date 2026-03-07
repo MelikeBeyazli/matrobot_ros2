@@ -18,6 +18,7 @@ find_package(ament_cmake REQUIRED)
 install(
   DIRECTORY
     launch
+    config
   DESTINATION
     share/${PROJECT_NAME}
 )
@@ -55,5 +56,6 @@ install(
 # Declare package to ROS 2 build system
 # ==================================================
 ament_package()
+
 
 
