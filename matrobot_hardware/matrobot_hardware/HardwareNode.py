@@ -38,8 +38,8 @@ class HardwareNode(Node):
         self.declare_parameter('left_joint_name', 'left_wheel_joint')
         self.declare_parameter('right_joint_name', 'right_wheel_joint')
 
-        self.declare_parameter('wheel_radius', 0.09)  # meters
-        self.declare_parameter('wheel_base', 0.435)     # meters
+        self.declare_parameter('wheel_radius', 0.09)   # meters
+        self.declare_parameter('wheel_base', 0.435)    # meters
 
         self.declare_parameter('odom_topic', '/odometry/wheel')
         self.declare_parameter('cmd_vel_topic', '/cmd_vel')
@@ -48,31 +48,26 @@ class HardwareNode(Node):
         self.declare_parameter('odom_frame_id', 'odom')
         self.declare_parameter('base_frame_id', 'base_footprint')
 
-        # TF publish (EKF varsa genelde false)
         self.declare_parameter('publish_tf', False)
-
-        # cmd gönderme
-        self.declare_parameter('cmd_rate_hz', 50.0)
-        self.declare_parameter('cmd_timeout_s', 0.4)
 
         # cmd clamp
         self.declare_parameter('clamp_cmd', True)
         self.declare_parameter('max_v', 1.2)
         self.declare_parameter('max_w', 3.0)
 
-        # Open-loop v,w -> PWM mapping (TUNE)
-        self.declare_parameter('v_to_pwm', 220.0)  # 1.0 m/s -> 220 PWM
-        self.declare_parameter('w_to_pwm', 120.0)  # 1.0 rad/s -> 120 PWM
+        # Open-loop v,w -> PWM mapping
+        self.declare_parameter('v_to_pwm', 220.0)
+        self.declare_parameter('w_to_pwm', 120.0)
         self.declare_parameter('pwm_max', 255)
 
-        # Odometry covariance (basit)
+        # Odometry covariance
         self.declare_parameter('odom_cov_x', 0.05)
         self.declare_parameter('odom_cov_y', 0.05)
         self.declare_parameter('odom_cov_yaw', 0.10)
 
         # Serial read settings
-        self.declare_parameter('serial_read_hz', 300.0)   # line parsing loop
-        self.declare_parameter('serial_timeout_s', 0.01)  # pyserial timeout
+        self.declare_parameter('serial_read_hz', 300.0)
+        self.declare_parameter('serial_timeout_s', 0.01)
 
         # -------------------------
         # Pull params
@@ -94,9 +89,6 @@ class HardwareNode(Node):
         self.base_frame_id = self.get_parameter('base_frame_id').value
 
         self.publish_tf = bool(self.get_parameter('publish_tf').value)
-
-        self.cmd_rate_hz = float(self.get_parameter('cmd_rate_hz').value)
-        self.cmd_timeout_s = float(self.get_parameter('cmd_timeout_s').value)
 
         self.clamp_cmd = bool(self.get_parameter('clamp_cmd').value)
         self.max_v = float(self.get_parameter('max_v').value)
@@ -125,10 +117,6 @@ class HardwareNode(Node):
         # -------------------------
         # State
         # -------------------------
-        self.v_cmd = 0.0
-        self.w_cmd = 0.0
-        self.last_cmd_time = self.get_clock().now()
-
         self.x = 0.0
         self.y = 0.0
         self.yaw = 0.0
@@ -146,8 +134,7 @@ class HardwareNode(Node):
         self.ser: Optional[serial.Serial] = None
         self._open_serial()
 
-        # Timers
-        self.cmd_timer = self.create_timer(1.0 / max(self.cmd_rate_hz, 1.0), self._cmd_timer_cb)
+        # Sadece okuma timer'ı kaldı
         self.read_timer = self.create_timer(1.0 / max(self.serial_read_hz, 10.0), self._read_timer_cb)
 
     def _open_serial(self):
@@ -157,21 +144,10 @@ class HardwareNode(Node):
                 baudrate=self.baudrate,
                 timeout=self.serial_timeout_s
             )
+            self.get_logger().info(f"Serial opened: {self.port} @ {self.baudrate}")
         except Exception as e:
             self.get_logger().error(f"Failed to open serial {self.port}: {e}")
             raise
-
-    def _on_cmd_vel(self, msg: Twist):
-        v = float(msg.linear.x)
-        w = float(msg.angular.z)
-
-        if self.clamp_cmd:
-            v = max(-self.max_v, min(self.max_v, v))
-            w = max(-self.max_w, min(self.max_w, w))
-
-        self.v_cmd = v
-        self.w_cmd = w
-        self.last_cmd_time = self.get_clock().now()
 
     def _vw_to_pwm(self, v: float, w: float) -> tuple[int, int]:
         """
@@ -191,16 +167,13 @@ class HardwareNode(Node):
         pwm_r = max(-self.pwm_max, min(self.pwm_max, pwm_r))
         return pwm_l, pwm_r
 
-    def _cmd_timer_cb(self):
-        # Timeout kontrolü
-        now = self.get_clock().now()
-        dt = (now - self.last_cmd_time).nanoseconds * 1e-9
+    def _on_cmd_vel(self, msg: Twist):
+        v = float(msg.linear.x)
+        w = float(msg.angular.z)
 
-        v = self.v_cmd
-        w = self.w_cmd
-        if dt > self.cmd_timeout_s:
-            v = 0.0
-            w = 0.0
+        if self.clamp_cmd:
+            v = max(-self.max_v, min(self.max_v, v))
+            w = max(-self.max_w, min(self.max_w, w))
 
         pwm_l, pwm_r = self._vw_to_pwm(v, w)
         line = f"PWM {pwm_l} {pwm_r}\n"
@@ -219,6 +192,7 @@ class HardwareNode(Node):
             data = self.ser.read(512)
             if not data:
                 return
+
             self.rx_buffer += data.decode('utf-8', errors='ignore')
 
             while '\n' in self.rx_buffer:
@@ -319,6 +293,7 @@ class HardwareNode(Node):
             t.transform.translation.z = 0.0
             t.transform.rotation = odom.pose.pose.orientation
             self.tf_broadcaster.sendTransform(t)
+
 
 def main(args=None):
     rclpy.init(args=args)
