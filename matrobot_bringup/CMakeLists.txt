@@ -42,15 +42,18 @@ install(
 # --------------------------------------------------
 # Python Node
 # --------------------------------------------------
-# install(
-#   PROGRAMS
-#     matrobot_bringup/NodeFile/Node.py
-#   DESTINATION
-#     lib/${PROJECT_NAME}
-# )
+ install(
+   PROGRAMS
+     matrobot_bringup/joy_multi_toggle.py
+     keyboard_teleop_twist.py
+     lidar_avoidance.py
+   DESTINATION
+     lib/${PROJECT_NAME}
+ )
 
 # ==================================================
 # Declare package to ROS 2 build system
 # ==================================================
 ament_package()
+
 
