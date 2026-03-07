@@ -46,8 +46,8 @@ install(
  install(
    PROGRAMS
      matrobot_bringup/joy_multi_toggle.py
-     keyboard_teleop_twist.py
-     lidar_avoidance.py
+     matrobot_bringup/keyboard_teleop_twist.py
+     matrobot_bringup/lidar_avoidance.py
    DESTINATION
      lib/${PROJECT_NAME}
  )
@@ -56,6 +56,7 @@ install(
 # Declare package to ROS 2 build system
 # ==================================================
 ament_package()
+
 
 
 
