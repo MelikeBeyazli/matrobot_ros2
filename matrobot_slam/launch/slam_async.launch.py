@@ -84,7 +84,7 @@ def generate_launch_description():
         ),
         condition=IfCondition(AndSubstitution(autostart, NotSubstitution(use_lifecycle_manager)))
     )
-    rviz_config = os.path.join(get_package_share_directory("kangal_slam"),
+    rviz_config = os.path.join(get_package_share_directory("matrobot_slam"),
                                    'rviz', 'slam_async.rviz'),
     rviz_node = Node(
         condition=IfCondition(LaunchConfiguration('use_rviz')),
