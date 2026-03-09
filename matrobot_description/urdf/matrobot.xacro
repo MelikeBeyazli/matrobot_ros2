@@ -124,18 +124,7 @@
     </joint>
   </xacro:macro>
   <!-- LIDAR Link & Joint -->
-  <link name="lidar_link">
-    <visual>
-      <origin xyz="0 0 0" rpy="0 0 0"/>
-      <geometry>
-        <mesh filename="file://$(find matrobot_description)/meshes/LIDAR.STL"/>
-      </geometry>
-      <material name="Gray">
-        <color rgba="0.75 0.75 0.75 1"/>
-      </material>
-    </visual>
-  </link>
-
+  <link name="lidar_link"/>
   <joint name="lidar_joint" type="fixed">
     <parent link="base_link"/>
     <child link="lidar_link"/>

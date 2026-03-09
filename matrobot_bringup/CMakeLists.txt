@@ -43,15 +43,29 @@ install(
 # --------------------------------------------------
 # Python Node
 # --------------------------------------------------
- install(
-   PROGRAMS
-     matrobot_bringup/joy_multi_toggle.py
-     keyboard_teleop_twist.py
-     lidar_avoidance.py
-   DESTINATION
-     lib/${PROJECT_NAME}
- )
+install(
+  PROGRAMS
+    matrobot_bringup/joy_multi_toggle.py
+  DESTINATION
+    lib/${PROJECT_NAME}
+  RENAME joy_multi_toggle
+)
 
+install(
+  PROGRAMS
+    matrobot_bringup/keyboard_teleop_twist.py
+  DESTINATION
+    lib/${PROJECT_NAME}
+  RENAME keyboard_teleop_twist
+)
+
+install(
+  PROGRAMS
+    matrobot_bringup/lidar_avoidance.py
+  DESTINATION
+    lib/${PROJECT_NAME}
+  RENAME lidar_avoidance
+)
 # ==================================================
 # Declare package to ROS 2 build system
 # ==================================================

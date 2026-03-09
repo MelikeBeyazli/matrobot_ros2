@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import os
+import shlex
 import signal
 import subprocess
 from typing import Dict, List, Optional
@@ -60,7 +61,7 @@ class ManagedProcess:
             else:
                 self.logger.info(f"{self.name} zaten kapanmış.")
         except subprocess.TimeoutExpired:
-            self.logger.warn(f"{self.name} SIGINT sonrası kapanmadı, SIGTERM deneniyor...")
+            self.logger.warning(f"{self.name} SIGINT sonrası kapanmadı, SIGTERM deneniyor...")
             try:
                 if self.pgid is not None:
                     os.killpg(self.pgid, signal.SIGTERM)
@@ -68,7 +69,7 @@ class ManagedProcess:
                     self.process.terminate()
                 self.process.wait(timeout=3.0)
             except Exception as e:
-                self.logger.warn(f"{self.name} SIGTERM başarısız: {e}, SIGKILL uygulanıyor...")
+                self.logger.warning(f"{self.name} SIGTERM başarısız: {e}, SIGKILL uygulanıyor...")
                 try:
                     if self.pgid is not None:
                         os.killpg(self.pgid, signal.SIGKILL)
@@ -98,18 +99,23 @@ class JoyMultiToggle(Node):
         self.declare_parameter('button_x_index', 2)
         self.declare_parameter('debounce_sec', 0.35)
 
-        self.declare_parameter('command_a', [])
-        self.declare_parameter('command_b', [])
-        self.declare_parameter('command_x', [])
+        # Komutları string olarak al, sonra split et
+        self.declare_parameter('command_a', '')
+        self.declare_parameter('command_b', '')
+        self.declare_parameter('command_x', '')
 
         self.button_a_index = int(self.get_parameter('button_a_index').value)
         self.button_b_index = int(self.get_parameter('button_b_index').value)
         self.button_x_index = int(self.get_parameter('button_x_index').value)
         self.debounce_sec = float(self.get_parameter('debounce_sec').value)
 
-        command_a = list(self.get_parameter('command_a').value)
-        command_b = list(self.get_parameter('command_b').value)
-        command_x = list(self.get_parameter('command_x').value)
+        command_a_str = str(self.get_parameter('command_a').value)
+        command_b_str = str(self.get_parameter('command_b').value)
+        command_x_str = str(self.get_parameter('command_x').value)
+
+        command_a = shlex.split(command_a_str) if command_a_str else []
+        command_b = shlex.split(command_b_str) if command_b_str else []
+        command_x = shlex.split(command_x_str) if command_x_str else []
 
         self.processes: Dict[str, ManagedProcess] = {
             'A': ManagedProcess('bringup', command_a, self.get_logger()),
@@ -136,6 +142,9 @@ class JoyMultiToggle(Node):
         self.get_logger().info(
             f"Buton map: A={self.button_a_index}, B={self.button_b_index}, X={self.button_x_index}"
         )
+        self.get_logger().info(f"A komutu: {command_a}")
+        self.get_logger().info(f"B komutu: {command_b}")
+        self.get_logger().info(f"X komutu: {command_x}")
         self.get_logger().info("Joy multi toggle hazır.")
 
     def joy_callback(self, msg: Joy):
