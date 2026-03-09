@@ -4,6 +4,7 @@ import os
 import shlex
 import signal
 import subprocess
+from datetime import datetime
 from typing import Dict, List, Optional
 
 import rclpy
@@ -97,21 +98,36 @@ class JoyMultiToggle(Node):
         self.declare_parameter('button_a_index', 0)
         self.declare_parameter('button_b_index', 1)
         self.declare_parameter('button_x_index', 2)
+        self.declare_parameter('button_y_index', 3)
         self.declare_parameter('debounce_sec', 0.35)
 
-        # Komutları string olarak al, sonra split et
         self.declare_parameter('command_a', '')
         self.declare_parameter('command_b', '')
         self.declare_parameter('command_x', '')
 
+        self.declare_parameter(
+            'map_save_root',
+            '~/matrobot_ws/src/matrobot_ros2/matrobot_navigation/maps'
+        )
+        self.declare_parameter(
+            'map_save_command',
+            'ros2 run nav2_map_server map_saver_cli'
+        )
+
         self.button_a_index = int(self.get_parameter('button_a_index').value)
         self.button_b_index = int(self.get_parameter('button_b_index').value)
         self.button_x_index = int(self.get_parameter('button_x_index').value)
+        self.button_y_index = int(self.get_parameter('button_y_index').value)
         self.debounce_sec = float(self.get_parameter('debounce_sec').value)
 
         command_a_str = str(self.get_parameter('command_a').value)
         command_b_str = str(self.get_parameter('command_b').value)
         command_x_str = str(self.get_parameter('command_x').value)
+
+        self.map_save_root = os.path.expanduser(
+            str(self.get_parameter('map_save_root').value)
+        )
+        self.map_save_command_str = str(self.get_parameter('map_save_command').value).strip()
 
         command_a = shlex.split(command_a_str) if command_a_str else []
         command_b = shlex.split(command_b_str) if command_b_str else []
@@ -127,10 +143,11 @@ class JoyMultiToggle(Node):
             'A': self.button_a_index,
             'B': self.button_b_index,
             'X': self.button_x_index,
+            'Y': self.button_y_index,
         }
 
-        self.prev_states = {'A': 0, 'B': 0, 'X': 0}
-        self.last_toggle_times = {'A': 0.0, 'B': 0.0, 'X': 0.0}
+        self.prev_states = {'A': 0, 'B': 0, 'X': 0, 'Y': 0}
+        self.last_toggle_times = {'A': 0.0, 'B': 0.0, 'X': 0.0, 'Y': 0.0}
 
         self.subscription = self.create_subscription(
             Joy,
@@ -140,11 +157,16 @@ class JoyMultiToggle(Node):
         )
 
         self.get_logger().info(
-            f"Buton map: A={self.button_a_index}, B={self.button_b_index}, X={self.button_x_index}"
+            f"Buton map: A={self.button_a_index}, "
+            f"B={self.button_b_index}, "
+            f"X={self.button_x_index}, "
+            f"Y={self.button_y_index}"
         )
         self.get_logger().info(f"A komutu: {command_a}")
         self.get_logger().info(f"B komutu: {command_b}")
         self.get_logger().info(f"X komutu: {command_x}")
+        self.get_logger().info(f"Harita kayıt kökü: {self.map_save_root}")
+        self.get_logger().info(f"Harita kayıt komutu: {self.map_save_command_str}")
         self.get_logger().info("Joy multi toggle hazır.")
 
     def joy_callback(self, msg: Joy):
@@ -161,10 +183,75 @@ class JoyMultiToggle(Node):
                 dt = now_sec - self.last_toggle_times[key]
                 if dt >= self.debounce_sec:
                     self.get_logger().info(f"{key} tuşu tetiklendi.")
-                    self.processes[key].toggle()
+
+                    if key == 'Y':
+                        self.save_map()
+                    else:
+                        self.processes[key].toggle()
+
                     self.last_toggle_times[key] = now_sec
 
             self.prev_states[key] = current
+
+    def save_map(self):
+        slam_process = self.processes.get('X')
+
+        if slam_process is None or not slam_process.is_running():
+            self.get_logger().warning(
+                "SLAM çalışmıyor. Önce X ile SLAM başlatılmalı, sonra Y ile harita kaydedilmeli."
+            )
+            return
+
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        target_dir = os.path.join(self.map_save_root, timestamp)
+        map_base_path = os.path.join(target_dir, timestamp)
+
+        try:
+            os.makedirs(target_dir, exist_ok=True)
+        except Exception as e:
+            self.get_logger().error(
+                f"Harita klasörü oluşturulamadı: {target_dir}, hata: {e}"
+            )
+            return
+
+        if not self.map_save_command_str:
+            self.get_logger().error("Harita kayıt komutu boş.")
+            return
+
+        command = shlex.split(self.map_save_command_str) + ['-f', map_base_path]
+
+        self.get_logger().info(f"Harita kaydı başlatılıyor: {' '.join(command)}")
+        self.get_logger().info(f"Kayıt klasörü: {target_dir}")
+
+        try:
+            result = subprocess.run(
+                command,
+                capture_output=True,
+                text=True,
+                timeout=30,
+                check=False
+            )
+
+            if result.stdout:
+                self.get_logger().info(f"map_saver stdout: {result.stdout.strip()}")
+
+            if result.stderr:
+                self.get_logger().warning(f"map_saver stderr: {result.stderr.strip()}")
+
+            if result.returncode == 0:
+                self.get_logger().info(
+                    f"Harita başarıyla kaydedildi: "
+                    f"{map_base_path}.yaml ve {map_base_path}.pgm"
+                )
+            else:
+                self.get_logger().error(
+                    f"Harita kaydı başarısız. returncode={result.returncode}"
+                )
+
+        except subprocess.TimeoutExpired:
+            self.get_logger().error("Harita kaydetme zaman aşımına uğradı.")
+        except Exception as e:
+            self.get_logger().error(f"Harita kaydetme hatası: {e}")
 
     def destroy_node(self):
         for proc in self.processes.values():
