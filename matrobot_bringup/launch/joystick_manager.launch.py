@@ -1,12 +1,20 @@
 from launch import LaunchDescription
 from launch_ros.actions import Node
+from launch.substitutions import PathJoinSubstitution
+from launch_ros.substitutions import FindPackageShare
 
 
 def generate_launch_description():
+    config_file = PathJoinSubstitution([
+        FindPackageShare('matrobot_bringup'),
+        'config',
+        'xbox_cmd_vel.yaml'
+    ])
+
     return LaunchDescription([
         Node(
             package='joy',
-            executable='joy_node',
+            executable='game_controller_node',
             name='joy_node',
             parameters=[{
                 'deadzone': 0.05,
@@ -25,12 +33,22 @@ def generate_launch_description():
                 'button_x_index': 2,
                 'button_y_index': 3,
                 'debounce_sec': 0.35,
-                'command_a': 'ros2 launch matrobot_bringup bringup.launch.py ekf_yaml:=ekf_imu_odom',
-                'command_b': 'ros2 launch matrobot_bringup teleop_cmd_vel.launch.py',
-                'command_x': 'ros2 launch matrobot_slam slam_async.launch.py use_rviz:=true',
-                'map_save_root': '~/matrobot_ws/src/matrobot_ros2/matrobot_navigation/maps',
+
+                'command_a': 'ros2 launch matrobot_bringup bringup.launch.py ekf_yaml:=ekf_imu_odom use_rviz:=false',
+                'command_b': 'ros2 launch matrobot_slam slam_async.launch.py use_rviz:=false',
+                'command_y': 'ros2 launch matrobot_simulation simulation.launch.py ekf_yaml:=ekf_imu_odom use_rviz:=false',
+
+                'map_save_root': '~/matro_ws/src/matrobot_ros2/matrobot_navigation/maps',
                 'map_save_command': 'ros2 run nav2_map_server map_saver_cli',
             }],
+            output='screen'
+        ),
+
+        Node(
+            package='teleop_twist_joy',
+            executable='teleop_node',
+            name='teleop_twist_joy',
+            parameters=[config_file],
             output='screen'
         )
     ])
