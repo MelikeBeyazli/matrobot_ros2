@@ -1,57 +1,70 @@
-## 1) ROS ortamını hazırla
+# Matrobot ROS 2
 
-Önce ROS 2 dağıtımının sistemde kurulu olduğundan emin ol. Bu projede örnek olarak `jazzy` kullanılıyor.
+![Matrobot Robot](images/matrobot.jpeg)
 
-Terminal açıp ortamı yükle:
+**Matrobot**, Bursa Teknik Üniversitesi **MATRO Topluluğu** tarafından ROS 2 eğitimleri kapsamında geliştirilen iki tekerlekli diferansiyel sürüşlü mobil robot platformudur.
 
-```bash
-export ROS_DISTRO=jazzy
-source /opt/ros/$ROS_DISTRO/setup.bash
-```
+Bu proje kapsamında robot yazılımı **ROS 2 tabanlı** olarak geliştirilmiş ve hem **simülasyon ortamında** hem de **gerçek robot üzerinde** çalışacak şekilde tasarlanmıştır.
 
-İstersen bunu kalıcı yapmak için `~/.bashrc` dosyana ekleyebilirsin:
+Proje içerisinde:
 
-```bash
-# ROS Dağıtımı
-export ROS_DISTRO=jazzy
+* ROS 2 robot mimarisi
+* SLAM (Simultaneous Localization and Mapping)
+* Navigasyon
+* Sensör entegrasyonu
+* Joystick ile robot kontrolü
+* Gazebo simülasyonu
 
-# ROS Domain ID
-export ROS_DOMAIN_ID=22
-
-# ROS 2 ortamını yükle
-source /opt/ros/$ROS_DISTRO/setup.bash
-
-# Workspace'leri yükle
-if [ -f ~/matro_ws/install/setup.bash ]; then
-  source ~/matro_ws/install/setup.bash
-fi
-
-if [ -f ~/pusula_ws/install/setup.bash ]; then
-  source ~/pusula_ws/install/setup.bash
-fi
-
-if [ -f ~/kangal_ws/install/setup.bash ]; then
-  source ~/kangal_ws/install/setup.bash
-fi
-
-if [ -f ~/hexapod_ws/install/setup.bash ]; then
-  source ~/hexapod_ws/install/setup.bash
-fi
-
-if [ -f ~/zemheri_ws/install/setup.bash ]; then
-  source ~/zemheri_ws/install/setup.bash
-fi
-
-alias build='colcon build && source ~/.bashrc'
-```
-
-Not: `systemd` servisleri `~/.bashrc` dosyasını otomatik okumaz. Bu yüzden servis içinde ROS ortamı ayrıca tanımlanır. Aşağıda bunun kurulumu da var.
+uygulamaları gerçekleştirilmiştir.
 
 ---
 
-## 2) Workspace oluşturma
+# Sistem Mimarisi
 
-Terminal açın:
+Matrobot yazılımı ROS 2 paketleri üzerine kurulmuştur.
+
+```
+matrobot_ros2
+│
+├── matrobot_bringup
+├── matrobot_description
+├── matrobot_hardware
+├── matrobot_navigation
+├── matrobot_simulation
+└── matrobot_slam
+```
+
+### Paket Açıklamaları
+
+| Paket                    | Açıklama                                           |
+| ------------------------ | -------------------------------------------------- |
+| **matrobot_bringup**     | Robotun ana başlatma yapıları ve joystick yönetimi |
+| **matrobot_description** | Robot URDF / Xacro tanımı                          |
+| **matrobot_hardware**    | Gerçek robot donanım arayüzleri                    |
+| **matrobot_navigation**  | Navigasyon yapılandırmaları ve haritalar           |
+| **matrobot_simulation**  | Gazebo simülasyon ortamı                           |
+| **matrobot_slam**        | SLAM ve haritalama launch dosyaları                |
+
+Joystick yönetimi **matrobot_bringup paketi içerisinde** yer almaktadır.
+
+---
+
+# Gereksinimler
+
+* Ubuntu 24.04
+* ROS 2 Jazzy
+* colcon
+* git
+
+ROS 2 kurulumu için:
+
+[https://docs.ros.org/en/jazzy/Installation.html](https://docs.ros.org/en/jazzy/Installation.html)
+
+---
+
+# Kurulum
+
+## Workspace oluşturma
 
 ```bash
 cd ~
@@ -59,11 +72,9 @@ mkdir -p matro_ws/src
 cd ~/matro_ws/src
 ```
 
-> `~` = `/home/kullanıcı_adı`
-
 ---
 
-## 3) Repoyu indirme
+## Repoyu indirme
 
 ```bash
 git clone https://github.com/MelikeBeyazli/matrobot_ros2.git
@@ -71,220 +82,218 @@ git clone https://github.com/MelikeBeyazli/matrobot_ros2.git
 
 ---
 
-## 4) Derleme
+## Derleme
 
 ```bash
 cd ~/matro_ws
 colcon build
-source install/setup.bash
-```
-
-Paketin düzgün derlendiğini kontrol etmek için:
-
-```bash
-ros2 pkg list | grep matrobot_bringup
 ```
 
 ---
 
-## 5) Joystick yönetim sistemi
+## ROS ortamını yükleme
 
-Bu projede joystick ile aşağıdaki işlemler yapılır:
+```bash
+source /opt/ros/jazzy/setup.bash
+source ~/matro_ws/install/setup.bash
+```
 
-* `joy_node` sürekli açık kalır
-* `A` tuşu ile `matrobot_bringup/bringup.launch.py` açılır veya kapanır
-* `B` tuşu ile `teleop_cmd_vel.launch.py` açılır veya kapanır
-* `X` tuşu ile `matrobot_slam/slam_async.launch.py use_rviz:=true` açılır veya kapanır
+Kalıcı olması için `.bashrc` içine eklenebilir:
 
-Sistem açıldıktan sonra çalışan ana launch:
+```bash
+export ROS_DISTRO=jazzy
+export ROS_DOMAIN_ID=60
+
+source /opt/ros/$ROS_DISTRO/setup.bash
+
+if [ -f ~/matro_ws/install/setup.bash ]; then
+  source ~/matro_ws/install/setup.bash
+fi
+```
+
+---
+
+# Çalıştırma
+
+Joystick yöneticisini başlatmak için:
 
 ```bash
 ros2 launch matrobot_bringup joystick_manager.launch.py
 ```
 
+Bu launch çalıştıktan sonra joystick üzerinden robot sistemi kontrol edilebilir.
+
 ---
 
-## 6) Joystick autostart script oluşturma
+# Joystick Tuş İşlevleri
 
-Açılışta otomatik başlatmak için script oluştur:
+Joystick üzerinden farklı ROS launch dosyaları tetiklenebilir.
 
-```bash
-nano ~/matro_ws/src/matrobot_ros2/start_matrobot_joystick.sh
-```
+| Tuş   | İşlev             |
+| ----- | ----------------- |
+| **A** | Robot bringup     |
+| **B** | SLAM başlat       |
+| **Y** | Simülasyon başlat |
+| **X** | Harita kaydet     |
 
-İçine şunu yaz:
+---
 
-```bash
-#!/bin/bash
-
-export ROS_DISTRO=jazzy
-export ROS_DOMAIN_ID=22
-
-source /opt/ros/$ROS_DISTRO/setup.bash
-source /home/mb/matro_ws/install/setup.bash
-
-exec ros2 launch matrobot_bringup joystick_manager.launch.py
-```
-
-Sonra çalıştırılabilir yap:
+## Bringup
 
 ```bash
-chmod +x ~/matro_ws/src/matrobot_ros2/start_matrobot_joystick.sh
+ros2 launch matrobot_bringup bringup.launch.py ekf_yaml:=ekf_imu_odom
 ```
 
 ---
 
-## 7) Systemd servis dosyasını oluşturma
-
-Servis dosyasını oluştur:
+## SLAM
 
 ```bash
-sudo nano /etc/systemd/system/matrobot_joystick.service
-```
-
-İçine şunu yaz:
-
-```ini
-[Unit]
-Description=MatRobot Joystick Manager
-After=network.target bluetooth.target
-Wants=bluetooth.target
-
-[Service]
-Type=simple
-User=mb
-Environment=HOME=/home/mb
-Environment=RCUTILS_LOGGING_BUFFERED_STREAM=1
-WorkingDirectory=/home/mb
-ExecStart=/home/mb/matro_ws/src/matrobot_ros2/start_matrobot_joystick.sh
-Restart=always
-RestartSec=3
-
-[Install]
-WantedBy=multi-user.target
+ros2 launch matrobot_slam slam_async.launch.py use_rviz:=false
 ```
 
 ---
 
-## 8) Servisi aktifleştirme
-
-Servis dosyasını sisteme tanıt:
+## Simulation
 
 ```bash
-sudo systemctl daemon-reload
-```
-
-Otomatik başlatmayı aç:
-
-```bash
-sudo systemctl enable matrobot_joystick.service
-```
-
-Servisi başlat:
-
-```bash
-sudo systemctl start matrobot_joystick.service
+ros2 launch matrobot_simulation simulation.launch.py ekf_yaml:=ekf_imu_odom
 ```
 
 ---
 
-## 9) Servis durumunu kontrol etme
-
-Servisin çalıştığını kontrol et:
+## Harita Kaydetme
 
 ```bash
-systemctl status matrobot_joystick.service
+ros2 run nav2_map_server map_saver_cli
 ```
 
-Beklenen çıktı içinde şuna benzer bir satır olmalı:
+Haritalar şu klasöre kaydedilir:
 
-```bash
-Active: active (running)
 ```
-
-Canlı log izlemek için:
-
-```bash
-journalctl -u matrobot_joystick.service -f
+~/matro_ws/src/matrobot_ros2/matrobot_navigation/maps
 ```
 
 ---
 
-## 10) Çalışan node'ları kontrol etme
+# USB Cihazlara Sabit İsim Atama (udev rules)
+
+Linux sistemlerinde USB cihazları yeniden başlatma sonrası farklı port isimleri alabilir:
+
+```
+/dev/ttyUSB0
+/dev/ttyUSB1
+/dev/ttyUSB2
+```
+
+Robot sistemlerinde bu durum sensörlerin yanlış portlardan okunmasına neden olabilir.
+
+Bu problemi çözmek için **udev rules kullanılarak sabit port isimleri atanabilir.**
+
+---
+
+# Udev Kural Dosyası Oluşturma
+
+```bash
+sudo nano /etc/udev/rules.d/99-matrobot.rules
+```
+
+---
+
+# Udev Kuralları
+
+```bash
+# Arduino (CH341 UART)
+SUBSYSTEM=="tty", ATTRS{idVendor}=="1a86", ATTRS{idProduct}=="7523", SYMLINK+="ttyARDUINO"
+
+# WITMOTION IMU
+SUBSYSTEM=="tty", ATTRS{idVendor}=="1a86", ATTRS{idProduct}=="7523", SYMLINK+="ttyIMU"
+
+# RPLIDAR A1
+SUBSYSTEM=="tty", ATTRS{idVendor}=="10c4", ATTRS{idProduct}=="ea60", SYMLINK+="ttyLIDAR"
+```
+
+---
+
+# Kuralları Etkinleştirme
+
+```bash
+sudo udevadm control --reload-rules
+sudo udevadm trigger
+```
+
+---
+
+# Doğrulama
+
+```bash
+ls -l /dev/tty*
+```
+
+Örnek çıktı:
+
+```
+/dev/ttyIMU -> ttyUSB0
+/dev/ttyLIDAR -> ttyUSB1
+/dev/ttyARDUINO -> ttyUSB2
+```
+
+---
+
+# USB Cihaz Bilgilerini Öğrenme
+
+Bir cihazın **Vendor ID**, **Product ID** ve **Product Name** bilgilerini öğrenmek için aşağıdaki komutlar kullanılabilir.
+
+### dmesg
+
+```bash
+dmesg | grep tty
+```
+
+---
+
+### udevadm
+
+```bash
+udevadm info -a -n /dev/ttyUSB0
+```
+
+Burada şu alanlar görülebilir:
+
+```
+ATTRS{idVendor}
+ATTRS{idProduct}
+ATTRS{product}
+```
+
+Bu bilgiler udev kuralı yazarken kullanılır.
+
+---
+
+### lsusb
+
+```bash
+lsusb
+```
+
+Örnek çıktı:
+
+```
+Bus 001 Device 004: ID 10c4:ea60 Silicon Labs CP210x UART Bridge
+```
+
+---
+
+# Node Kontrolü
+
+Çalışan ROS node’larını görmek için:
 
 ```bash
 ros2 node list
 ```
-
-Beklenen node'lar:
-
-```bash
-/joy_node
-/joy_multi_toggle
-```
-
 ---
 
-## 11) Tuş işlevleri
+# Lisans
 
-Joystick bağlıyken:
+Bu proje **ROS 2 eğitimleri kapsamında geliştirilmiştir.**
 
-* `A` → `bringup.launch.py` aç/kapat
-* `B` → `teleop_cmd_vel.launch.py` aç/kapat
-* `X` → `slam_async.launch.py use_rviz:=true` aç/kapat
-
----
-
-## 12) Faydalı servis komutları
-
-Servisi durdurmak için:
-
-```bash
-sudo systemctl stop matrobot_joystick.service
-```
-
-Servisi yeniden başlatmak için:
-
-```bash
-sudo systemctl restart matrobot_joystick.service
-```
-
-Servisi devre dışı bırakmak için:
-
-```bash
-sudo systemctl disable matrobot_joystick.service
-```
-
----
-
-## 13) Yeniden başlatma testi
-
-Sistemi yeniden başlat:
-
-```bash
-sudo reboot
-```
-
-Açıldıktan sonra servis durumunu kontrol et:
-
-```bash
-systemctl status matrobot_joystick.service
-```
-
----
-
-## 14) Sistem akışı
-
-```text
-Bilgisayar açılır
-   ↓
-systemd servisi başlar
-   ↓
-start_matrobot_joystick.sh çalışır
-   ↓
-ros2 launch matrobot_bringup joystick_manager.launch.py
-   ↓
-joy_node + joy_multi_toggle başlar
-   ↓
-Joystick tuşları ile launch dosyaları açılır / kapanır
-```
