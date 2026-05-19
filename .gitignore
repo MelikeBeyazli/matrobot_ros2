@@ -4,6 +4,9 @@
 /venv
 /docs
 /matrobot_hardware
+/matrobot_slam
+/matrobot_navigation
+/matrobot_bringup
 /build
 /install
 /log
