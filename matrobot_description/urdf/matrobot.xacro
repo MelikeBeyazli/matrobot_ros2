@@ -141,13 +141,17 @@
   </joint>
   
   <!-- Instantiate all links -->
-  <xacro:Wheel_Link name="left_wheel"  parent_link="base_link"
-                    x="-${((base_width + wheel_length) / 2) - 0.05}"
-                    y="${(base_width + wheel_length) / 2}" z="0.0"/>
+  <xacro:Wheel_Link name="left_wheel"
+                    parent_link="base_link"
+                    x="0.0"
+                    y="${wheel_separation / 2}"
+                    z="0.0"/>
 
-  <xacro:Wheel_Link name="right_wheel" parent_link="base_link"
-                    x="-${((base_width + wheel_length) / 2) - 0.05}"
-                    y="-${(base_width + wheel_length) / 2}" z="0.0"/>
+  <xacro:Wheel_Link name="right_wheel"
+                    parent_link="base_link"
+                    x="0.0"
+                    y="-${wheel_separation / 2}"
+                    z="0.0"/>
 
   <xacro:Caster_Wheel name="caster_front_wheel" parent_link="base_link"
                       x="${(base_length / 2) - 0.02}" y="0.0"
