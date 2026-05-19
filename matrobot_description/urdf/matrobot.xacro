@@ -214,7 +214,7 @@
 		    <right_joint>right_wheel_joint</right_joint>
 
 		    <wheel_separation>${wheel_separation}</wheel_separation>
-		    <wheel_radius>${wheel_radius}</wheel_radius>
+		    <wheel_radius>${wheel_radius*2}</wheel_radius>
 
 		    <topic>/cmd_vel</topic>
 
@@ -223,6 +223,7 @@
 
 		    <frame_id>odom</frame_id>
 		    <child_frame_id>base_footprint</child_frame_id>
+        <publish_odom_tf>false</publish_odom_tf>
 		  </plugin>
 		</gazebo>
 		

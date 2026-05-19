@@ -29,19 +29,13 @@ def generate_launch_description():
         description='Use simulation time'
     )
 
-    declare_ekf_yaml = DeclareLaunchArgument(
-        'ekf_yaml',
-        default_value='ekf_imu_odom',
-        description='EKF YAML config name (without .yaml)'
-    )
-
     # ========================
     # EKF config path
     # ========================
     ekf_config = PathJoinSubstitution([
         hardware_pkg,
         'config',
-        PythonExpression(["'", ekf_yaml, ".yaml'"])
+        'ekf_imu_odom.yaml'
     ])
 
     # ========================
@@ -58,7 +52,6 @@ def generate_launch_description():
 
     return LaunchDescription([
         declare_sim_time,
-        declare_ekf_yaml,
         ekf_local,
     ])
 

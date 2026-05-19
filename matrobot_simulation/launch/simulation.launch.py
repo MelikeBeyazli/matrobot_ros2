@@ -4,7 +4,7 @@ import os
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription
 from launch.conditions import IfCondition
-from launch.substitutions import LaunchConfiguration
+from launch.substitutions import LaunchConfiguration, PathJoinSubstitution
 
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch_ros.actions import Node
@@ -18,7 +18,6 @@ def generate_launch_description():
     # ========================
     use_sim_time = LaunchConfiguration('use_sim_time')
     use_rviz     = LaunchConfiguration('use_rviz')
-    ekf_yaml     = LaunchConfiguration('ekf_yaml')
 
     declare_sim_time = DeclareLaunchArgument(
         'use_sim_time',
@@ -30,11 +29,6 @@ def generate_launch_description():
         'use_rviz',
         default_value='true',
         description='Launch RViz'
-    )
-
-    declare_ekf = DeclareLaunchArgument(
-        'ekf_yaml', default_value='ekf_imu',
-        description='EKF configuration file (without .yaml)'
     )
 
     # ========================
@@ -113,37 +107,40 @@ def generate_launch_description():
         arguments=[
             '--ros-args',
             '-p', f'config_file:={bridge_config}'
-        ],
-        parameters=[{
-            'qos_overrides./tf_static.publisher.durability': 'transient_local'
-        }]
+        ]
     )
     # ==================================================
     # Localization (EKF)
     # ==================================================
-    localization_launch = IncludeLaunchDescription(
-        PythonLaunchDescriptionSource(
-            os.path.join(
-                get_package_share_directory('matrobot_hardware'),
-                'launch',
-                'localization.launch.py'
-            )
-        ),
-        launch_arguments={
-            'use_sim_time': use_sim_time,
-            'ekf_yaml': ekf_yaml,
-        }.items()
+    # ========================
+    # EKF config path
+    # ========================
+    ekf_config = PathJoinSubstitution([
+        sim_pkg,
+        'config',
+        'ekf.yaml'
+    ])
+
+    # ========================
+    # Local EKF (odom frame)
+    # ========================
+    ekf_local = Node(
+        package='robot_localization',
+        executable='ekf_node',
+        name='ekf_filter_node',
+        output='screen',
+        parameters=[{'use_sim_time': use_sim_time}, ekf_config],
+        remappings=[('odometry/filtered', '/odometry/local')]
     )
 
 
     return LaunchDescription([
         declare_sim_time,
         declare_rviz,
-        declare_ekf,
 
         gazebo,
         description_launch,
         spawn_robot,
         bridge,
-        localization_launch,
+        ekf_local,
     ])
