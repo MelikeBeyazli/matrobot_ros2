@@ -16,9 +16,9 @@ ekf_filter_node:
     # ===============================
     imu0: /imu/data
     imu0_config: [false, false, false,   # position kapalı
-                  true, true,  true,    # orientation açık
+                  false, false,  true,    # orientation açık
                   false, false, false,   # linear velocity kapalı
-                  false, false,  true,    # angular velocity açık
+                  false, false,  false,    # angular velocity açık
                   false,  false,  false]    # linear acceleration açık
     imu0_differential: false
     imu0_relative: false

@@ -23,7 +23,7 @@
   <xacro:property name="caster_wheel_weight" value="0.5" />
   
   <xacro:property name="wheel_separation" value="${base_width + wheel_length + 0.08}" />  <!--Gövde genişliği + (Teker genişliği/2)*2 + mil uzunluğu-->
-  <xacro:property name="wheel_diameter" value="${wheel_radius}" />
+  <xacro:property name="wheel_diameter" value="${wheel_radius*2}" />
 
   <xacro:property name="lidar_radius" value="0.0275"/>
   <xacro:property name="lidar_height" value="0.04"/>
@@ -218,7 +218,7 @@
 		    <right_joint>right_wheel_joint</right_joint>
 
 		    <wheel_separation>${wheel_separation}</wheel_separation>
-		    <wheel_radius>${wheel_radius*2}</wheel_radius>
+		    <wheel_radius>${wheel_radius}</wheel_radius>
 
 		    <topic>/cmd_vel</topic>
 
