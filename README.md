@@ -1,80 +1,108 @@
 # Matrobot ROS 2
 
-![Matrobot Robot](images/matrobot.jpeg)
+<pd>
+  <img src="images/matrobot.jpeg" width="200">
+</pd>
 
-**Matrobot**, Bursa Teknik Üniversitesi **MATRO Topluluğu** tarafından ROS 2 eğitimleri kapsamında geliştirilen iki tekerlekli diferansiyel sürüşlü mobil robot platformudur.
+## Genel Bakış
 
-Bu proje kapsamında robot yazılımı **ROS 2 tabanlı** olarak geliştirilmiş ve hem **simülasyon ortamında** hem de **gerçek robot üzerinde** çalışacak şekilde tasarlanmıştır.
+**Matrobot**, Bursa Teknik Üniversitesi MATRO Topluluğu tarafından geliştirilen ROS 2 tabanlı diferansiyel sürüşlü mobil robot platformudur.
 
-Proje içerisinde:
+Proje hem:
 
-* ROS 2 robot mimarisi
-* SLAM (Simultaneous Localization and Mapping)
-* Navigasyon
-* Sensör entegrasyonu
-* Joystick ile robot kontrolü
-* Gazebo simülasyonu
+* Gazebo simülasyon ortamında
+* hem de gerçek robot üzerinde
 
-uygulamaları gerçekleştirilmiştir.
+çalışacak şekilde tasarlanmıştır.
+
+Bu repo içerisinde özellikle:
+
+* robot modelleme
+* simülasyon
+* haritalama
+* navigasyon
+* obstacle avoidance
+* Behavior Tree tabanlı karar mekanizması
+* LiDAR tabanlı çevre algılama
+
+çalışmaları bulunmaktadır.
+
+---
+
+# Proje Yapısı
+
+Bu repoda aktif olarak kullanılan temel paketler:
+
+```text
+matrobot_ros2
+│
+├── matrobot_description
+└── matrobot_simulation
+```
+
+---
+
+# Paket Açıklamaları
+
+| Paket                  | Açıklama                                                           |
+| ---------------------- | ------------------------------------------------------------------ |
+| `matrobot_description` | Robot URDF/Xacro modeli, RViz yapılandırmaları ve sensör tanımları |
+| `matrobot_simulation`  | Gazebo ortamı, SLAM, navigasyon, Behavior Tree ve analiz araçları  |
 
 ---
 
 # Sistem Mimarisi
 
-Matrobot yazılımı ROS 2 paketleri üzerine kurulmuştur.
+```mermaid
+graph TD
 
+A[Gazebo Simulation] --> B[Robot Model]
+B --> C[LiDAR Sensor]
+B --> D[Odometry]
+
+C --> E[SLAM Toolbox]
+D --> E
+
+E --> F[Occupancy Grid Map]
+
+F --> G[A* Global Planner]
+G --> H[Behavior Tree Navigator]
+H --> I[LOS Controller]
+I --> J['/cmd_vel]
+
+C --> H
+D --> H
 ```
-matrobot_ros2
-│
-├── matrobot_bringup
-├── matrobot_description
-├── matrobot_hardware
-├── matrobot_navigation
-├── matrobot_simulation
-└── matrobot_slam
-```
-
-### Paket Açıklamaları
-
-| Paket                    | Açıklama                                           |
-| ------------------------ | -------------------------------------------------- |
-| **matrobot_bringup**     | Robotun ana başlatma yapıları ve joystick yönetimi |
-| **matrobot_description** | Robot URDF / Xacro tanımı                          |
-| **matrobot_hardware**    | Gerçek robot donanım arayüzleri                    |
-| **matrobot_navigation**  | Navigasyon yapılandırmaları ve haritalar           |
-| **matrobot_simulation**  | Gazebo simülasyon ortamı                           |
-| **matrobot_slam**        | SLAM ve haritalama launch dosyaları                |
-
-Joystick yönetimi **matrobot_bringup paketi içerisinde** yer almaktadır.
 
 ---
 
-# Gereksinimler
+# Kullanılan Teknolojiler
 
-* Ubuntu 24.04
-* ROS 2 Jazzy
-* colcon
-* git
-
-ROS 2 kurulumu için:
-
-[https://docs.ros.org/en/jazzy/Installation.html](https://docs.ros.org/en/jazzy/Installation.html)
+| Teknoloji     | Açıklama                      |
+| ------------- | ----------------------------- |
+| ROS 2 Humble  | Robot middleware altyapısı    |
+| Gazebo        | Simülasyon ortamı             |
+| RViz2         | Görselleştirme                |
+| SLAM Toolbox  | Haritalama ve lokalizasyon    |
+| Python        | Navigasyon ve analiz araçları |
+| A* Planner    | Global path planning          |
+| Behavior Tree | Karar mekanizması             |
 
 ---
 
 # Kurulum
 
-## Workspace oluşturma
+## Workspace Oluşturma
 
 ```bash
 cd ~
-mkdir -p matro_ws/src
-cd ~/matro_ws/src
+mkdir -p matrobot_ws/src
+cd ~/matrobot_ws/src
 ```
 
 ---
 
-## Repoyu indirme
+## Repoyu Klonlama
 
 ```bash
 git clone https://github.com/MelikeBeyazli/matrobot_ros2.git
@@ -85,79 +113,56 @@ git clone https://github.com/MelikeBeyazli/matrobot_ros2.git
 ## Derleme
 
 ```bash
-cd ~/matro_ws
+cd ~/matrobot_ws
 colcon build
 ```
 
 ---
 
-## ROS ortamını yükleme
+## ROS Ortamını Yükleme
 
 ```bash
-source /opt/ros/jazzy/setup.bash
-source ~/matro_ws/install/setup.bash
+source /opt/ros/humble/setup.bash
+source ~/matrobot_ws/install/setup.bash
 ```
 
-Kalıcı olması için `.bashrc` içine eklenebilir:
+Kalıcı olması için `.bashrc` içerisine eklenebilir:
 
 ```bash
-export ROS_DISTRO=jazzy
-export ROS_DOMAIN_ID=60
+source /opt/ros/humble/setup.bash
 
-source /opt/ros/$ROS_DISTRO/setup.bash
-
-if [ -f ~/matro_ws/install/setup.bash ]; then
-  source ~/matro_ws/install/setup.bash
+if [ -f ~/matrobot_ws/install/setup.bash ]; then
+  source ~/matrobot_ws/install/setup.bash
 fi
 ```
 
 ---
 
-# Çalıştırma
+# Simülasyon
 
-Joystick yöneticisini başlatmak için:
-
-```bash
-ros2 launch matrobot_bringup joystick_manager.launch.py
-```
-
-Bu launch çalıştıktan sonra joystick üzerinden robot sistemi kontrol edilebilir.
-
----
-
-# Joystick Tuş İşlevleri
-
-Joystick üzerinden farklı ROS launch dosyaları tetiklenebilir.
-
-| Tuş   | İşlev             |
-| ----- | ----------------- |
-| **A** | Robot bringup     |
-| **B** | SLAM başlat       |
-| **Y** | Simülasyon başlat |
-| **X** | Harita kaydet     |
-
----
-
-## Bringup
+## Gazebo Ortamını Başlatma
 
 ```bash
-ros2 launch matrobot_bringup bringup.launch.py ekf_yaml:=ekf_imu_odom
+ros2 launch matrobot_simulation simulation.launch.py
 ```
 
 ---
 
-## SLAM
+## RViz Başlatma
 
 ```bash
-ros2 launch matrobot_slam slam_async.launch.py use_rviz:=false
+rviz2
 ```
 
 ---
 
-## Simulation
+# SLAM ve Haritalama
+
+## SLAM Başlatma
 
 ```bash
-ros2 launch matrobot_simulation simulation.launch.py ekf_yaml:=ekf_imu_odom
+ros2 launch slam_toolbox online_async_launch.py \
+  params_file:=~/matrobot_ws/src/matrobot_ros2/matrobot_simulation/config/slam_params.yaml
 ```
 
 ---
@@ -165,135 +170,217 @@ ros2 launch matrobot_simulation simulation.launch.py ekf_yaml:=ekf_imu_odom
 ## Harita Kaydetme
 
 ```bash
-ros2 run nav2_map_server map_saver_cli
+ros2 run nav2_map_server map_saver_cli \
+  -f ~/matrobot_ws/src/matrobot_ros2/matrobot_simulation/map/default_map
 ```
 
-Haritalar şu klasöre kaydedilir:
+Harita çıktıları:
 
-```
-~/matro_ws/src/matrobot_ros2/matrobot_navigation/maps
+```text
+map/
+├── default_map.pgm
+└── default_map.yaml
 ```
 
 ---
 
-# USB Cihazlara Sabit İsim Atama (udev rules)
+# Navigasyon Sistemi
 
-Linux sistemlerinde USB cihazları yeniden başlatma sonrası farklı port isimleri alabilir:
+Navigasyon sistemi şu bileşenlerden oluşmaktadır:
 
+```mermaid
+graph LR
+
+A[Occupancy Grid Map] --> B[A* Planner]
+B --> C[Waypoint Path]
+C --> D[LOS Controller]
+D --> E[Velocity Commands]
+
+F[LiDAR] --> G[Obstacle Detection]
+G --> H[Recovery System]
+H --> B
+
+I[Behavior Tree] --> B
+I --> D
+I --> H
 ```
-/dev/ttyUSB0
-/dev/ttyUSB1
-/dev/ttyUSB2
-```
-
-Robot sistemlerinde bu durum sensörlerin yanlış portlardan okunmasına neden olabilir.
-
-Bu problemi çözmek için **udev rules kullanılarak sabit port isimleri atanabilir.**
 
 ---
 
-# Udev Kural Dosyası Oluşturma
+# Behavior Tree Yapısı
+
+Navigasyon sistemi klasik FSM yerine BT (Behavior Tree) mantığı kullanılarak geliştirilmiştir.
+
+Kullanılan temel BT node'ları:
+
+| Node          | Görev                            |
+| ------------- | -------------------------------- |
+| EnsurePath    | Yol kontrolü                     |
+| ReplanPath    | Yeniden yol planlama             |
+| FollowPathLOS | LOS tabanlı yol takibi           |
+| Recovery      | Engel sonrası kurtarma davranışı |
+| FinalApproach | Hedefe son yaklaşım              |
+
+---
+
+## BT Akışı
+
+```mermaid
+graph TD
+
+A[Start Navigation]
+--> B{Path Valid?}
+
+B -- No --> C[Plan New Path]
+B -- Yes --> D[Follow Path]
+
+D --> E{Obstacle Detected?}
+
+E -- Yes --> F[Recovery Behavior]
+E -- No --> G{Goal Reached?}
+
+F --> C
+
+G -- No --> D
+G -- Yes --> H[Final Approach]
+H --> I[Stop Robot]
+```
+
+---
+
+# Obstacle Avoidance
+
+Sistem LiDAR verisini kullanarak:
+
+* ön engel algılama
+* hız düşürme
+* acil durma
+* geri gitme
+* yeniden planlama
+
+işlemlerini gerçekleştirmektedir.
+
+Kullanılan temel parametreler:
+
+| Parametre           | Açıklama                    |
+| ------------------- | --------------------------- |
+| `slow_distance`     | Hız düşürme mesafesi        |
+| `stop_distance`     | Tam durma mesafesi          |
+| `critical_distance` | Recovery tetikleme mesafesi |
+| `robot_radius_m`    | Robot yarıçapı              |
+| `safety_margin_m`   | Güvenlik payı               |
+
+---
+
+# Frontier Exploration
+
+Sistem ayrıca frontier tabanlı exploration desteği içermektedir.
+
+Amaç:
+
+* bilinmeyen alanları keşfetmek
+* otomatik harita oluşturmak
+* coverage mantığı ile alan taramak
+
+---
+
+# Kullanılan Topicler
+
+| Topic           | Açıklama           |
+| --------------- | ------------------ |
+| `/scan`         | LiDAR verisi       |
+| `/map`          | Occupancy grid map |
+| `/cmd_vel`      | Robot hız komutu   |
+| `/planned_path` | Planlanan yol      |
+| `/odom`         | Odometri           |
+
+---
+
+# Klasör Yapısı
+
+```text
+matrobot_simulation
+│
+├── config
+├── launch
+├── map
+├── plots
+├── scripts
+│   ├── navigation
+│   ├── exploration
+│   └── analysis
+├── worlds
+└── rviz
+```
+
+---
+
+# Analiz ve Grafikler
+
+Navigasyon sonuçları otomatik olarak CSV formatında kaydedilmektedir.
+
+Üretilen analizler:
+
+* robot trajectory
+* goal convergence
+* obstacle proximity
+* BT state timeline
+* recovery behavior timeline
+* localization error analysis
+
+Grafik üretimi:
 
 ```bash
-sudo nano /etc/udev/rules.d/99-matrobot.rules
+python3 scripts/analysis/academic_plot_suite.py
 ```
 
 ---
 
-# Udev Kuralları
+# Örnek Çalıştırma
+
+## Simülasyon Başlat
 
 ```bash
-# Arduino (CH341 UART)
-SUBSYSTEM=="tty", ATTRS{idVendor}=="1a86", ATTRS{idProduct}=="7523", SYMLINK+="ttyARDUINO"
-
-# WITMOTION IMU
-SUBSYSTEM=="tty", ATTRS{idVendor}=="1a86", ATTRS{idProduct}=="7523", SYMLINK+="ttyIMU"
-
-# RPLIDAR A1
-SUBSYSTEM=="tty", ATTRS{idVendor}=="10c4", ATTRS{idProduct}=="ea60", SYMLINK+="ttyLIDAR"
+ros2 launch matrobot_simulation simulation.launch.py
 ```
 
 ---
 
-# Kuralları Etkinleştirme
+## Harita Yükleme
 
 ```bash
-sudo udevadm control --reload-rules
-sudo udevadm trigger
+ros2 run nav2_map_server map_server \
+  --ros-args \
+  -p yaml_filename:=~/matrobot_ws/src/matrobot_ros2/matrobot_simulation/map/default_map.yaml
 ```
 
 ---
 
-# Doğrulama
+## Navigation Başlat
 
 ```bash
-ls -l /dev/tty*
-```
-
-Örnek çıktı:
-
-```
-/dev/ttyIMU -> ttyUSB0
-/dev/ttyLIDAR -> ttyUSB1
-/dev/ttyARDUINO -> ttyUSB2
+python3 scripts/navigation/bt_navigator_node.py \
+  --ros-args \
+  --params-file config/matrobot_navigation_params.yaml
 ```
 
 ---
 
-# USB Cihaz Bilgilerini Öğrenme
+# Geliştirme Notları
 
-Bir cihazın **Vendor ID**, **Product ID** ve **Product Name** bilgilerini öğrenmek için aşağıdaki komutlar kullanılabilir.
+Sistem halen aktif geliştirme aşamasındadır.
 
-### dmesg
+Planlanan geliştirmeler:
 
-```bash
-dmesg | grep tty
-```
+* Nav2 entegrasyonu
+* DWA local planner
+* MPC controller
+* gerçek robot testleri
+* semantic mapping
+* gelişmiş frontier exploration
 
----
-
-### udevadm
-
-```bash
-udevadm info -a -n /dev/ttyUSB0
-```
-
-Burada şu alanlar görülebilir:
-
-```
-ATTRS{idVendor}
-ATTRS{idProduct}
-ATTRS{product}
-```
-
-Bu bilgiler udev kuralı yazarken kullanılır.
-
----
-
-### lsusb
-
-```bash
-lsusb
-```
-
-Örnek çıktı:
-
-```
-Bus 001 Device 004: ID 10c4:ea60 Silicon Labs CP210x UART Bridge
-```
-
----
-
-# Node Kontrolü
-
-Çalışan ROS node’larını görmek için:
-
-```bash
-ros2 node list
-```
 ---
 
 # Lisans
 
-Bu proje **ROS 2 eğitimleri kapsamında geliştirilmiştir.**
-
+Bu proje eğitim ve araştırma amaçlı geliştirilmiştir.

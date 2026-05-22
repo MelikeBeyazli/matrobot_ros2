@@ -1,0 +1,25 @@
+frontier_explorer:
+  ros__parameters:
+    mode: mapping
+
+    map_topic: /map
+    odom_topic: /odometry/local
+    scan_topic: /scan
+    cmd_vel_topic: /cmd_vel
+
+    frontier_search_stride: 3
+    frontier_min_distance: 0.80
+    frontier_max_distance: 6.00
+    target_reached_distance: 0.35
+
+    normal_speed: 0.18
+    turn_speed_limit: 0.60
+    yaw_gain: 1.30
+
+    front_stop_distance: 0.60
+    backup_speed: -0.10
+    backup_duration: 0.9
+    reselect_period: 4.0
+
+    blacklist_radius: 0.80
+    max_blacklist_size: 40

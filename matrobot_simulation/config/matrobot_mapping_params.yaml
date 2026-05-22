@@ -1,0 +1,8 @@
+spiral_explorer:
+  ros__parameters:
+    mode: mapping
+    cmd_vel_topic: /cmd_vel
+    scan_topic: /scan
+    front_stop_distance: 0.55
+    base_speed: 0.3
+    turn_speed: 0.5

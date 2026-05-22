@@ -16,13 +16,13 @@
   <plugin filename="gz-sim-scene-broadcaster-system"
           name="gz::sim::systems::SceneBroadcaster"/>
 
-  <!-- Tüm kamera / lidar vb sensörler için -->
+  <!-- TĆ¼m kamera / lidar vb sensĆ¶rler iĆ§in -->
   <plugin filename="gz-sim-sensors-system"
           name="gz::sim::systems::Sensors">
     <render_engine>ogre2</render_engine>
   </plugin>
 
-  <!-- IMU için gerekli sistem plugin’i -->
+  <!-- IMU iĆ§in gerekli sistem pluginā€™i -->
   <plugin filename="gz-sim-imu-system"
           name="gz::sim::systems::Imu"/>
 
@@ -220,129 +220,141 @@
     <model name="boundary_walls">
       <static>true</static>
 
-      <!-- North wall -->
+      <!-- Larger test area: x = [-6, 6], y = [-4, 4] -->
       <link name="north_wall">
-        <pose>0 3.06 0.25 0 0 0</pose>
+        <pose>0 4.06 0.25 0 0 0</pose>
         <collision name="col">
-          <geometry><box><size>10.24 0.12 0.50</size></box></geometry>
+          <geometry><box><size>12.24 0.12 0.50</size></box></geometry>
         </collision>
         <visual name="vis">
-          <geometry><box><size>10.24 0.12 0.50</size></box></geometry>
+          <geometry><box><size>12.24 0.12 0.50</size></box></geometry>
         </visual>
       </link>
 
-      <!-- South wall -->
       <link name="south_wall">
-        <pose>0 -3.06 0.25 0 0 0</pose>
+        <pose>0 -4.06 0.25 0 0 0</pose>
         <collision name="col">
-          <geometry><box><size>10.24 0.12 0.50</size></box></geometry>
+          <geometry><box><size>12.24 0.12 0.50</size></box></geometry>
         </collision>
         <visual name="vis">
-          <geometry><box><size>10.24 0.12 0.50</size></box></geometry>
+          <geometry><box><size>12.24 0.12 0.50</size></box></geometry>
         </visual>
       </link>
 
-      <!-- East wall -->
       <link name="east_wall">
-        <pose>5.06 0 0.25 0 0 0</pose>
+        <pose>6.06 0 0.25 0 0 0</pose>
         <collision name="col">
-          <geometry><box><size>0.12 6.24 0.50</size></box></geometry>
+          <geometry><box><size>0.12 8.24 0.50</size></box></geometry>
         </collision>
         <visual name="vis">
-          <geometry><box><size>0.12 6.24 0.50</size></box></geometry>
+          <geometry><box><size>0.12 8.24 0.50</size></box></geometry>
         </visual>
       </link>
 
-      <!-- West wall -->
       <link name="west_wall">
-        <pose>-5.06 0 0.25 0 0 0</pose>
+        <pose>-6.06 0 0.25 0 0 0</pose>
         <collision name="col">
-          <geometry><box><size>0.12 6.24 0.50</size></box></geometry>
+          <geometry><box><size>0.12 8.24 0.50</size></box></geometry>
         </collision>
         <visual name="vis">
-          <geometry><box><size>0.12 6.24 0.50</size></box></geometry>
+          <geometry><box><size>0.12 8.24 0.50</size></box></geometry>
         </visual>
       </link>
     </model>
 
-    <model name="cylinder_obstacles">
+    <!-- Navigation-friendly obstacle set:
+         - not too symmetric
+         - enough space for A* to find alternatives
+         - good for recovery / replanning tests
+    -->
+    <model name="navigation_test_obstacles">
       <static>true</static>
 
-      <!-- Helper: cylinder dims -->
-      <!-- radius 0.15m, length 0.50m -->
-
-      <!-- Row y = -1.8 -->
-      <link name="cyl_1">
-        <pose>-3.6 -1.8 0.25 0 0 0</pose>
-        <collision name="col"><geometry><cylinder><radius>0.15</radius><length>0.50</length></cylinder></geometry></collision>
-        <visual name="vis"><geometry><cylinder><radius>0.15</radius><length>0.50</length></cylinder></geometry></visual>
+      <!-- Left-side sparse cylinders -->
+      <link name="cyl_left_1">
+        <pose>-4.2 -2.4 0.25 0 0 0</pose>
+        <collision name="col"><geometry><cylinder><radius>0.18</radius><length>0.50</length></cylinder></geometry></collision>
+        <visual name="vis"><geometry><cylinder><radius>0.18</radius><length>0.50</length></cylinder></geometry></visual>
       </link>
 
-      <link name="cyl_2">
-        <pose>-2.0 -1.8 0.25 0 0 0</pose>
-        <collision name="col"><geometry><cylinder><radius>0.15</radius><length>0.50</length></cylinder></geometry></collision>
-        <visual name="vis"><geometry><cylinder><radius>0.15</radius><length>0.50</length></cylinder></geometry></visual>
+      <link name="cyl_left_2">
+        <pose>-3.2 -0.8 0.25 0 0 0</pose>
+        <collision name="col"><geometry><cylinder><radius>0.18</radius><length>0.50</length></cylinder></geometry></collision>
+        <visual name="vis"><geometry><cylinder><radius>0.18</radius><length>0.50</length></cylinder></geometry></visual>
       </link>
 
-      <link name="cyl_3">
-        <pose>-0.4 -1.8 0.25 0 0 0</pose>
-        <collision name="col"><geometry><cylinder><radius>0.15</radius><length>0.50</length></cylinder></geometry></collision>
-        <visual name="vis"><geometry><cylinder><radius>0.15</radius><length>0.50</length></cylinder></geometry></visual>
+      <link name="cyl_left_3">
+        <pose>-4.4 1.8 0.25 0 0 0</pose>
+        <collision name="col"><geometry><cylinder><radius>0.18</radius><length>0.50</length></cylinder></geometry></collision>
+        <visual name="vis"><geometry><cylinder><radius>0.18</radius><length>0.50</length></cylinder></geometry></visual>
       </link>
 
-      <!-- Row y = 0.0 (one shifted to break symmetry) -->
-      <link name="cyl_4">
-        <pose>-3.5 0.0 0.25 0 0 0</pose>
-        <collision name="col"><geometry><cylinder><radius>0.15</radius><length>0.50</length></cylinder></geometry></collision>
-        <visual name="vis"><geometry><cylinder><radius>0.15</radius><length>0.50</length></cylinder></geometry></visual>
+      <!-- Middle staggered obstacles -->
+      <link name="cyl_mid_1">
+        <pose>-1.4 -2.2 0.25 0 0 0</pose>
+        <collision name="col"><geometry><cylinder><radius>0.20</radius><length>0.50</length></cylinder></geometry></collision>
+        <visual name="vis"><geometry><cylinder><radius>0.20</radius><length>0.50</length></cylinder></geometry></visual>
       </link>
 
-      <link name="cyl_5">
-        <pose>-1.9 0.15 0.25 0 0 0</pose> <!-- slight shift -->
-        <collision name="col"><geometry><cylinder><radius>0.15</radius><length>0.50</length></cylinder></geometry></collision>
-        <visual name="vis"><geometry><cylinder><radius>0.15</radius><length>0.50</length></cylinder></geometry></visual>
+      <link name="cyl_mid_2">
+        <pose>-0.4 0.2 0.25 0 0 0</pose>
+        <collision name="col"><geometry><cylinder><radius>0.20</radius><length>0.50</length></cylinder></geometry></collision>
+        <visual name="vis"><geometry><cylinder><radius>0.20</radius><length>0.50</length></cylinder></geometry></visual>
       </link>
 
-      <link name="cyl_6">
-        <pose>-0.3 0.0 0.25 0 0 0</pose>
-        <collision name="col"><geometry><cylinder><radius>0.15</radius><length>0.50</length></cylinder></geometry></collision>
-        <visual name="vis"><geometry><cylinder><radius>0.15</radius><length>0.50</length></cylinder></geometry></visual>
+      <link name="cyl_mid_3">
+        <pose>0.8 2.1 0.25 0 0 0</pose>
+        <collision name="col"><geometry><cylinder><radius>0.20</radius><length>0.50</length></cylinder></geometry></collision>
+        <visual name="vis"><geometry><cylinder><radius>0.20</radius><length>0.50</length></cylinder></geometry></visual>
       </link>
 
-      <!-- Row y = +1.8 -->
-      <link name="cyl_7">
-        <pose>-3.6 1.8 0.25 0 0 0</pose>
-        <collision name="col"><geometry><cylinder><radius>0.15</radius><length>0.50</length></cylinder></geometry></collision>
-        <visual name="vis"><geometry><cylinder><radius>0.15</radius><length>0.50</length></cylinder></geometry></visual>
+      <!-- Right-side obstacles, leaving an alternate corridor -->
+      <link name="cyl_right_1">
+        <pose>2.2 -1.7 0.25 0 0 0</pose>
+        <collision name="col"><geometry><cylinder><radius>0.18</radius><length>0.50</length></cylinder></geometry></collision>
+        <visual name="vis"><geometry><cylinder><radius>0.18</radius><length>0.50</length></cylinder></geometry></visual>
       </link>
 
-      <link name="cyl_8">
-        <pose>-2.0 1.8 0.25 0 0 0</pose>
-        <collision name="col"><geometry><cylinder><radius>0.15</radius><length>0.50</length></cylinder></geometry></collision>
-        <visual name="vis"><geometry><cylinder><radius>0.15</radius><length>0.50</length></cylinder></geometry></visual>
-      </link>
-
-      <link name="cyl_9">
-        <pose>-0.4 1.8 0.25 0 0 0</pose>
-        <collision name="col"><geometry><cylinder><radius>0.15</radius><length>0.50</length></cylinder></geometry></collision>
-        <visual name="vis"><geometry><cylinder><radius>0.15</radius><length>0.50</length></cylinder></geometry></visual>
+      <link name="cyl_right_2">
+        <pose>3.8 0.6 0.25 0 0 0</pose>
+        <collision name="col"><geometry><cylinder><radius>0.18</radius><length>0.50</length></cylinder></geometry></collision>
+        <visual name="vis"><geometry><cylinder><radius>0.18</radius><length>0.50</length></cylinder></geometry></visual>
       </link>
     </model>
 
+    <!-- Two wall segments create a mild maze, but not a trap -->
+    <model name="navigation_wall_segments">
+      <static>true</static>
+
+      <link name="wall_segment_1">
+        <pose>1.2 -0.9 0.25 0 0 0.35</pose>
+        <collision name="col"><geometry><box><size>2.2 0.14 0.50</size></box></geometry></collision>
+        <visual name="vis"><geometry><box><size>2.2 0.14 0.50</size></box></geometry></visual>
+      </link>
+
+      <link name="wall_segment_2">
+        <pose>2.8 2.2 0.25 0 0 -0.45</pose>
+        <collision name="col"><geometry><box><size>1.8 0.14 0.50</size></box></geometry></collision>
+        <visual name="vis"><geometry><box><size>1.8 0.14 0.50</size></box></geometry></visual>
+      </link>
+    </model>
+
+    <!-- Landmark L-shape kept, moved away from common goal corridors -->
     <model name="landmark_L_shape">
       <static>true</static>
 
       <link name="L1">
-        <pose>3.5 2.0 0.25 0 0 0</pose>
-        <collision name="col"><geometry><box><size>1.2 0.12 0.50</size></box></geometry></collision>
-        <visual name="vis"><geometry><box><size>1.2 0.12 0.50</size></box></geometry></visual>
+        <pose>4.8 3.0 0.25 0 0 0</pose>
+        <collision name="col"><geometry><box><size>1.0 0.12 0.50</size></box></geometry></collision>
+        <visual name="vis"><geometry><box><size>1.0 0.12 0.50</size></box></geometry></visual>
       </link>
 
       <link name="L2">
-        <pose>4.1 1.4 0.25 0 0 0</pose>
-        <collision name="col"><geometry><box><size>0.12 1.2 0.50</size></box></geometry></collision>
-        <visual name="vis"><geometry><box><size>0.12 1.2 0.50</size></box></geometry></visual>
+        <pose>5.3 2.5 0.25 0 0 0</pose>
+        <collision name="col"><geometry><box><size>0.12 1.0 0.50</size></box></geometry></collision>
+        <visual name="vis"><geometry><box><size>0.12 1.0 0.50</size></box></geometry></visual>
       </link>
-    </model> 
+    </model>
+
   </world>
 </sdf>

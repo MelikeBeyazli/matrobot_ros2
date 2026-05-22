@@ -1,0 +1,2 @@
+duration_s,travelled_distance_m,final_distance_to_goal_m,min_distance_to_goal_m,mean_front_distance_m,min_front_distance_m,recovery_samples,bt_states_observed,sample_count
+997.7000503540039,13.328042681265904,0.7936037947592494,0.785264583722502,1.4346953632082051,0.6739508509635925,0,"FOLLOW_PATH_LOS, WAITING_FOR_DATA",9845

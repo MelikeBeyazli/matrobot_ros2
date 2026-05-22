@@ -1,0 +1,53 @@
+astar_bt_navigator:
+  ros__parameters:
+    mode: navigation
+    map_yaml_path: /home/melikebeyazli/matrobot_ws/src/matrobot_ros2/matrobot_simulation/map/default_map.yaml
+
+    goal_x: 10.0
+    goal_y: -2.0
+    goal_yaw: 0.0
+    goal_yaw_tolerance: 0.40
+    final_yaw_gain: 1.20
+
+    odom_topic: /odometry/local
+    scan_topic: /scan
+    cmd_vel_topic: /cmd_vel
+    map_topic: /map
+    path_topic: /planned_path
+
+    map_frame: map
+    odom_frame: odom
+    publish_static_map_to_odom: true
+    publish_inflated_map: false
+
+    robot_radius_m: 0.24
+    safety_margin_m: 0.18
+    lookahead_distance: 0.80
+    goal_tolerance: 0.55
+    near_goal_replan_distance: 1.20
+
+    final_approach_distance: 0.85
+    final_approach_speed: 0.08
+    final_approach_yaw_tolerance: 0.35
+
+    lidar_obstacle_range: 1.20
+    slow_distance: 1.10
+    stop_distance: 0.60
+    critical_distance: 0.42
+
+    normal_speed: 0.24
+    min_navigation_speed: 0.06
+    max_angular_speed: 0.80
+    yaw_gain: 1.60
+    replan_period: 2.50
+
+    backup_duration: 1.60
+    backup_speed: -0.14
+    turn_duration: 2.20
+    turn_speed: 0.58
+    recovery_block_radius_cells: 10
+    recovery_block_forward_distance: 1.50
+
+    max_linear_accel: 0.35
+    max_angular_accel: 1.20
+    control_period: 0.10
